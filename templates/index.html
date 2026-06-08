@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>個人記帳本</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#667eea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="記帳本">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js');
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  /* ── header ── */
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span { font-size: 1.6rem; }
+
+  /* ── layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+  /* ── month nav ── */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: 1.4rem;
+  }
+  .month-nav input[type=month] {
+    padding: .4rem .8rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    font-size: .95rem;
+    background: #fff;
+  }
+  .month-nav button {
+    padding: .4rem .9rem;
+    border: none;
+    border-radius: 8px;
+    background: #667eea;
+    color: #fff;
+    cursor: pointer;
+    font-size: .9rem;
+  }
+
+  /* ── summary cards ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+  }
+  @media(max-width:600px){ .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .card .label { font-size: .8rem; color: #888; margin-bottom: .3rem; }
+  .card .value { font-size: 1.7rem; font-weight: 700; }
+  .card.income  .value { color: #22c55e; }
+  .card.expense .value { color: #ef4444; }
+  .card.balance .value { color: #667eea; }
+
+  /* ── two-column below cards ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.2rem;
+    align-items: start;
+  }
+  @media(max-width:800px){ .main-grid { grid-template-columns: 1fr; } }
+
+  /* ── panel shared ── */
+  .panel {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: .9rem 1.2rem;
+    font-weight: 600;
+    font-size: .95rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  /* ── transaction table ── */
+  .filter-bar {
+    padding: .6rem 1.2rem;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    gap: .5rem;
+  }
+  .filter-bar a {
+    text-decoration: none;
+    padding: .28rem .7rem;
+    border-radius: 20px;
+    font-size: .82rem;
+    color: #555;
+    background: #efefef;
+  }
+  .filter-bar a.active { background: #667eea; color: #fff; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: #fafafa;
+    font-size: .78rem;
+    color: #888;
+    text-align: left;
+    padding: .6rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  td { padding: .65rem 1rem; border-bottom: 1px solid #f8f8f8; font-size: .88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbff; }
+
+  .badge {
+    display: inline-block;
+    padding: .18rem .55rem;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .badge.in  { background: #dcfce7; color: #16a34a; }
+  .badge.out { background: #fee2e2; color: #dc2626; }
+
+  .amt.in  { color: #22c55e; font-weight: 600; }
+  .amt.out { color: #ef4444; font-weight: 600; }
+
+  .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 1rem;
+    padding: 0 .2rem;
+    transition: color .15s;
+  }
+  .del-btn:hover { color: #ef4444; }
+
+  .empty { padding: 2.5rem; text-align: center; color: #aaa; font-size: .9rem; }
+
+  /* ── right panel: form + chart ── */
+  .side { display: flex; flex-direction: column; gap: 1.2rem; }
+
+  form .form-row { margin-bottom: .8rem; }
+  form label { display: block; font-size: .8rem; color: #666; margin-bottom: .3rem; }
+  form input, form select, form textarea {
+    width: 100%;
+    padding: .48rem .8rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    font-size: .88rem;
+    background: #fff;
+    font-family: inherit;
+  }
+  form input:focus, form select:focus { outline: none; border-color: #667eea; }
+
+  .type-toggle { display: flex; gap: .5rem; }
+  .type-toggle label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .88rem;
+    font-weight: 600;
+    transition: all .15s;
+    margin: 0;
+  }
+  .type-toggle input[type=radio] { display: none; }
+  .type-toggle input[value=支出]:checked + label { border-color: #ef4444; background: #fee2e2; color: #dc2626; }
+  .type-toggle input[value=收入]:checked + label { border-color: #22c55e; background: #dcfce7; color: #16a34a; }
+
+  .submit-btn {
+    width: 100%;
+    padding: .7rem;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: .4rem;
+  }
+  .submit-btn:hover { opacity: .9; }
+
+  .chart-wrap { padding: 1rem; }
+  .no-data { padding: 2rem; text-align: center; color: #aaa; font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <span>📒</span>
+  <h1>個人記帳本</h1>
+</header>
+
+<div class="container">
+
+  <!-- 月份切換 -->
+  <form class="month-nav" method="get">
+    <input type="month" name="month" value="{{ month }}">
+    <button type="submit">查詢</button>
+  </form>
+
+  <!-- 統計卡片 -->
+  <div class="cards">
+    <div class="card income">
+      <div class="label">本月收入</div>
+      <div class="value">+{{ "{:,.0f}".format(income) }}</div>
+    </div>
+    <div class="card expense">
+      <div class="label">本月支出</div>
+      <div class="value">-{{ "{:,.0f}".format(expense) }}</div>
+    </div>
+    <div class="card balance">
+      <div class="label">結餘</div>
+      <div class="value">{{ "{:,.0f}".format(balance) }}</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- 左：交易列表 -->
+    <div class="panel">
+      <div class="panel-header">📋 交易紀錄</div>
+      <div class="filter-bar">
+        <a href="?month={{ month }}" class="{{ 'active' if not type_filter }}">全部</a>
+        <a href="?month={{ month }}&type=支出" class="{{ 'active' if type_filter=='支出' }}">支出</a>
+        <a href="?month={{ month }}&type=收入" class="{{ 'active' if type_filter=='收入' }}">收入</a>
+      </div>
+      {% if rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>類型</th>
+            <th>分類</th>
+            <th>金額</th>
+            <th>備註</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td>{{ r.date }}</td>
+            <td>
+              {% if r.type == '收入' %}
+                <span class="badge in">收入</span>
+              {% else %}
+                <span class="badge out">支出</span>
+              {% endif %}
+            </td>
+            <td>{{ r.category }}</td>
+            <td class="amt {{ 'in' if r.type=='收入' else 'out' }}">
+              {{ '+' if r.type=='收入' else '-' }}{{ "{:,.0f}".format(r.amount) }}
+            </td>
+            <td>{{ r.note or '' }}</td>
+            <td>
+              <form method="post" action="/delete/{{ r.id }}"
+                    onsubmit="return confirm('確定刪除這筆紀錄？')">
+                <input type="hidden" name="month" value="{{ month }}">
+                <button class="del-btn" type="submit">✕</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">本月尚無紀錄</div>
+      {% endif %}
+    </div>
+
+    <!-- 右：新增表單 + 圓餅圖 -->
+    <div class="side">
+
+      <div class="panel">
+        <div class="panel-header">➕ 新增紀錄</div>
+        <div style="padding:1rem 1.2rem">
+          <form method="post" action="/add">
+            <div class="form-row">
+              <label>類型</label>
+              <div class="type-toggle">
+                <input type="radio" name="type" id="t-out" value="支出" checked>
+                <label for="t-out">支出</label>
+                <input type="radio" name="type" id="t-in" value="收入">
+                <label for="t-in">收入</label>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>金額</label>
+              <input type="number" name="amount" min="1" step="1"
+                     placeholder="0" required>
+            </div>
+            <div class="form-row">
+              <label>分類</label>
+              <select name="category">
+                {% for cat in categories %}
+                <option>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-row">
+              <label>日期</label>
+              <input type="date" name="date" value="{{ today }}">
+            </div>
+            <div class="form-row">
+              <label>備註</label>
+              <input type="text" name="note" placeholder="選填">
+            </div>
+            <button class="submit-btn" type="submit">新增</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">🥧 支出分類</div>
+        {% if cat_stats %}
+        <div class="chart-wrap">
+          <canvas id="pieChart" height="220"></canvas>
+        </div>
+        {% else %}
+        <div class="no-data">本月無支出資料</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% if cat_stats %}
+<script>
+  const labels = {{ cat_stats | map(attribute='category') | list | tojson }};
+  const data   = {{ cat_stats | map(attribute='total')    | list | tojson }};
+  const colors = ['#667eea','#ef4444','#f59e0b','#22c55e',
+                  '#3b82f6','#a78bfa','#ec4899','#14b8a6','#f97316'];
+
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 10 } }
+      },
+      cutout: '55%'
+    }
+  });
+</script>
+{% endif %}
+
+</body>
+</html>
