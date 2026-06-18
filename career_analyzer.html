@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>履歷分析器 — 升學 & 求職顧問</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c63ff;
+    --accent2: #48d9a4;
+    --accent3: #ff6b6b;
+    --text: #e8eaf6;
+    --text2: #9098b8;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #1e2240 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  header .logo { font-size: 28px; }
+  header h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+  header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* API Key Bar */
+  .api-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .api-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  .api-bar input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 13px; padding: 8px 12px; outline: none;
+    font-family: monospace;
+  }
+  .api-bar input:focus { border-color: var(--accent); }
+  .api-bar .save-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .api-bar .save-btn:hover { opacity: 0.85; }
+
+  /* Resume Form */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .field input, .field select, .field textarea {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 14px; padding: 10px 12px; outline: none;
+    font-family: inherit; resize: vertical;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { min-height: 80px; }
+  .field select option { background: var(--surface2); }
+
+  .section-label {
+    font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin: 20px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Tag input */
+  .tag-input-wrap {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px; cursor: text;
+    min-height: 44px; align-items: flex-start;
+  }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag {
+    background: var(--accent); color: #fff; border-radius: 6px;
+    padding: 3px 10px 3px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;
+  }
+  .tag .rm { cursor: pointer; opacity: 0.7; font-size: 15px; line-height: 1; }
+  .tag .rm:hover { opacity: 1; }
+  .tag-input-wrap input {
+    background: transparent; border: none; outline: none; color: var(--text);
+    font-size: 14px; flex: 1; min-width: 80px; padding: 2px 0;
+  }
+
+  /* Analyze button */
+  .analyze-btn {
+    width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), #8b7fff);
+    border: none; border-radius: var(--radius); color: #fff; font-size: 16px;
+    font-weight: 700; cursor: pointer; margin-top: 4px; letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .analyze-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .analyze-btn:active { transform: translateY(0); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Results */
+  .results-card { display: none; }
+  .results-card.show { display: block; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tab-btn {
+    flex: 1; padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border);
+    border-bottom: none; border-radius: 10px 10px 0 0; color: var(--text2);
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    text-align: center;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { background: var(--surface); color: var(--text); border-color: var(--border); }
+
+  .tab-content {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius); padding: 24px; min-height: 300px;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Streaming text */
+  .stream-output {
+    font-size: 14px; line-height: 1.8; color: var(--text);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .stream-output h2 { font-size: 17px; color: var(--accent2); margin: 20px 0 10px; }
+  .stream-output h3 { font-size: 15px; color: var(--accent); margin: 14px 0 8px; }
+  .stream-output strong { color: var(--accent2); }
+  .stream-output .school-card, .stream-output .job-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin: 10px 0;
+  }
+  .stream-output ul { padding-left: 18px; }
+  .stream-output li { margin-bottom: 4px; }
+
+  /* Loading spinner */
+  .loading {
+    display: flex; align-items: center; gap: 12px; color: var(--text2); font-size: 14px;
+    padding: 40px 0; justify-content: center;
+  }
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-msg {
+    background: #2a1515; border: 1px solid #5c2323; border-radius: 10px;
+    padding: 14px 18px; color: #ff8a8a; font-size: 14px; margin-top: 16px;
+  }
+
+  /* Markdown-style rendering */
+  .md h2 { font-size: 16px; color: var(--accent2); margin: 18px 0 8px; font-weight: 700; }
+  .md h3 { font-size: 14px; color: var(--accent); margin: 12px 0 6px; font-weight: 700; }
+  .md p { margin-bottom: 8px; }
+  .md ul { padding-left: 20px; margin-bottom: 8px; }
+  .md li { margin-bottom: 3px; }
+  .md strong { color: #ffd97d; }
+  .md em { color: var(--accent2); font-style: normal; font-weight: 600; }
+  .md hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .md .cost-box {
+    background: #1a2635; border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 8px 0;
+    font-size: 13px;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .tabs { flex-direction: column; }
+    .tab-btn { border-radius: 8px 8px 0 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎓</div>
+  <div>
+    <h1>履歷分析器</h1>
+    <p>AI 驅動的升學 & 求職顧問｜台灣研究所 · 台灣職缺 · 美國碩士</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="api-bar">
+    <label>🔑 Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+    <button class="save-btn" onclick="saveKey()">儲存</button>
+  </div>
+
+  <!-- Resume Form -->
+  <div class="card">
+    <div class="card-title"><div class="dot"></div>填寫你的學經歷</div>
+
+    <div class="section-label">學歷</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>目前最高學歷</label>
+        <select id="edu_level">
+          <option value="高中">高中 / 高職</option>
+          <option value="大學在讀">大學在讀</option>
+          <option value="大學畢業" selected>大學畢業</option>
+          <option value="碩士在讀">碩士在讀</option>
+          <option value="碩士畢業">碩士畢業</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>就讀 / 畢業學校</label>
+        <input type="text" id="edu_school" placeholder="例：國立台灣大學" />
+      </div>
+      <div class="field">
+        <label>科系</label>
+        <input type="text" id="edu_dept" placeholder="例：資訊工程學系" />
+      </div>
+      <div class="field">
+        <label>GPA（選填）</label>
+        <input type="text" id="edu_gpa" placeholder="例：3.8 / 4.0 或 85 分" />
+      </div>
+    </div>
+
+    <div class="section-label">語言能力</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>英文程度</label>
+        <select id="lang_en">
+          <option value="無">無考試成績</option>
+          <option value="多益600以下">多益 600 以下</option>
+          <option value="多益600-750">多益 600–750</option>
+          <option value="多益750-900">多益 750–900</option>
+          <option value="多益900以上">多益 900 以上</option>
+          <option value="托福80以下">托福 80 以下</option>
+          <option value="托福80-99">托福 80–99</option>
+          <option value="托福100以上">托福 100 以上</option>
+          <option value="雅思6以下">雅思 6.0 以下</option>
+          <option value="雅思6-7">雅思 6.0–7.0</option>
+          <option value="雅思7以上">雅思 7.0 以上</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>其他語言（選填）</label>
+        <input type="text" id="lang_other" placeholder="例：日文 N2、韓文初級" />
+      </div>
+    </div>
+
+    <div class="section-label">工作 & 實習經驗</div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>工作 / 實習經歷（每行一筆，格式：公司 · 職位 · 年資）</label>
+        <textarea id="work_exp" placeholder="例：
+台積電 · 製程整合工程師 · 2年
+鴻海 · 軟體實習生 · 6個月"></textarea>
+      </div>
+    </div>
+
+    <div class="section-label">技能</div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>技術技能（按 Enter 新增標籤）</label>
+        <div class="tag-input-wrap" id="skills_wrap" onclick="document.getElementById('skills_input').focus()">
+          <input id="skills_input" placeholder="輸入技能後按 Enter" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">研究 & 作品</div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>研究主題 / 論文 / 作品集（簡述）</label>
+        <textarea id="research" placeholder="例：大學專題研究自然語言處理，發表於 ICDM 2024；個人開發了一個 SaaS 記帳工具…"></textarea>
+      </div>
+    </div>
+
+    <div class="section-label">目標 & 備註</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>感興趣的領域 / 方向</label>
+        <input type="text" id="interest" placeholder="例：AI、金融科技、半導體、產品管理" />
+      </div>
+      <div class="field">
+        <label>預算或特別考量（選填）</label>
+        <input type="text" id="budget" placeholder="例：希望就讀公費，或月支出不超過 3 萬" />
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">🔍 開始全面分析</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card results-card" id="resultsCard">
+    <div class="card-title"><div class="dot" style="background:var(--accent2)"></div>分析結果</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(0)">🎓 台灣研究所</button>
+      <button class="tab-btn" onclick="switchTab(1)">🏢 台灣職缺</button>
+      <button class="tab-btn" onclick="switchTab(2)">✈️ 美國碩士</button>
+    </div>
+    <div class="tab-content">
+      <div class="tab-pane active md" id="pane0"><div class="loading"><div class="spinner"></div>分析中，請稍候…</div></div>
+      <div class="tab-pane md" id="pane1"><div class="loading"><div class="spinner"></div>分析中，請稍候…</div></div>
+      <div class="tab-pane md" id="pane2"><div class="loading"><div class="spinner"></div>分析中，請稍候…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// --- Tag input ---
+const skillTags = [];
+const skillsInput = document.getElementById('skills_input');
+skillsInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = skillsInput.value.trim();
+    if (val && !skillTags.includes(val)) {
+      skillTags.push(val);
+      renderTags();
+    }
+    skillsInput.value = '';
+  } else if (e.key === 'Backspace' && skillsInput.value === '' && skillTags.length) {
+    skillTags.pop();
+    renderTags();
+  }
+});
+function renderTags() {
+  const wrap = document.getElementById('skills_wrap');
+  wrap.querySelectorAll('.tag').forEach(t => t.remove());
+  skillTags.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tag';
+    el.innerHTML = `${t}<span class="rm" onclick="removeTag(${i})">×</span>`;
+    wrap.insertBefore(el, skillsInput);
+  });
+}
+function removeTag(i) { skillTags.splice(i, 1); renderTags(); }
+
+// --- API Key ---
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) { localStorage.setItem('anthropic_key', k); alert('已儲存 API Key'); }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('anthropic_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+});
+
+// --- Tabs ---
+function switchTab(i) {
+  document.querySelectorAll('.tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  document.querySelectorAll('.tab-pane').forEach((p, j) => p.classList.toggle('active', i === j));
+}
+
+// --- Collect resume ---
+function collectResume() {
+  return {
+    edu_level: document.getElementById('edu_level').value,
+    edu_school: document.getElementById('edu_school').value,
+    edu_dept: document.getElementById('edu_dept').value,
+    edu_gpa: document.getElementById('edu_gpa').value,
+    lang_en: document.getElementById('lang_en').value,
+    lang_other: document.getElementById('lang_other').value,
+    work_exp: document.getElementById('work_exp').value,
+    skills: skillTags.join(', '),
+    research: document.getElementById('research').value,
+    interest: document.getElementById('interest').value,
+    budget: document.getElementById('budget').value,
+  };
+}
+
+function resumeText(r) {
+  return `
+學歷：${r.edu_level}，${r.edu_school} ${r.edu_dept}${r.edu_gpa ? `，GPA ${r.edu_gpa}` : ''}
+英文能力：${r.lang_en}${r.lang_other ? `；其他語言：${r.lang_other}` : ''}
+工作/實習經歷：
+${r.work_exp || '（無）'}
+技術技能：${r.skills || '（未填）'}
+研究/作品：${r.research || '（無）'}
+感興趣領域：${r.interest || '（未指定）'}
+預算考量：${r.budget || '（未指定）'}
+  `.trim();
+}
+
+// --- Prompts ---
+const PROMPTS = {
+  tw_grad: (resume) => `你是台灣研究所申請顧問。根據以下履歷，推薦適合申請的台灣研究所，並附上花費資訊。
+
+履歷：
+${resume}
+
+請依照以下格式輸出（使用 Markdown）：
+
+## 📊 你的競爭力分析
+簡要說明申請者的強項與弱項（3–5 點）
+
+## 🏆 推薦研究所清單
+
+依難度分三個層級：衝刺校、目標校、保底校。
+每所學校請包含：
+- **學校名稱 + 系所**
+- 入學門檻（GPA、筆試、備審重點）
+- 為什麼適合這位申請者
+- 💰 費用試算：
+  - 學費：每學期/每年
+  - 台北月生活費 OR 外縣市月生活費（依校址）
+  - **年總花費估算**（學費 + 生活費）
+
+## 💡 備審 & 面試建議
+針對這位申請者的具體建議`,
+
+  tw_job: (resume) => `你是台灣職涯顧問。根據以下履歷，推薦適合的職位與公司，並附上薪資與生活費資訊。
+
+履歷：
+${resume}
+
+請依照以下格式輸出（使用 Markdown）：
+
+## 📊 職涯競爭力分析
+分析申請者適合的職位方向、優勢與需加強之處
+
+## 💼 推薦職位類型
+列出 3–5 種最適合的職位類型，每種包含：
+- 職位名稱與說明
+- 需要的核心技能（申請者符合/不符合哪些）
+
+## 🏢 推薦台灣公司清單
+列出 8–12 家具體公司，分為：
+**頂尖企業（競爭激烈）**、**適合目標（強烈推薦）**、**穩健選擇**
+每家公司包含：
+- **公司名稱**（產業）
+- 適合職位
+- 💰 薪資範圍：起薪 / 3–5 年資深薪資（月薪 NTD）
+- 🏙️ 工作城市：該城市月生活費估算
+- **薪資/生活費比**（月薪 ÷ 月支出）
+
+## 🚀 求職建議
+針對這位申請者的具體行動建議`,
+
+  us_grad: (resume) => `你是美國碩士申請顧問。根據以下履歷，推薦適合申請的美國碩士項目，並附上詳細費用。
+
+履歷：
+${resume}
+
+請依照以下格式輸出（使用 Markdown）：
+
+## 📊 申請競爭力分析
+分析申請者的優勢、劣勢，以及是否需要補強（GRE/TOEFL/研究經驗等）
+
+## 🎯 推薦申請方向
+建議申請的科系/領域，以及理由
+
+## 🏫 推薦學校清單
+
+分三個層級：衝刺校（Dream）、目標校（Match）、保底校（Safe）
+每所學校請包含：
+- **學校名稱 + 系所 + QS/US News 排名**
+- 錄取門檻（GPA、GRE/TOEFL 要求、研究背景）
+- 申請難度與申請者的勝算評估
+- 💰 費用試算（以學制 1.5–2 年計算）：
+  - 學費（每學期/全程）
+  - 所在城市生活費（月 USD）
+  - **年總花費 USD + 換算 NTD**
+  - 是否有獎學金/TA/RA 機會
+
+## 📝 申請準備建議
+SOP 方向、推薦信、Portfolio 等具體建議`,
+};
+
+// --- Call Claude via local Flask backend (streaming) ---
+async function callClaude(apiKey, prompt, paneId) {
+  const pane = document.getElementById(paneId);
+  pane.innerHTML = '<div class="loading"><div class="spinner"></div>AI 分析中…</div>';
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ api_key: apiKey, prompt }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      pane.innerHTML = `<div class="error-msg">❌ 錯誤：${err.error || res.statusText}</div>`;
+      return;
+    }
+
+    pane.innerHTML = '';
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              fullText += parsed.delta.text;
+              pane.innerHTML = renderMd(fullText);
+            }
+          } catch {}
+        }
+      }
+    }
+    if (!fullText) pane.innerHTML = '<div class="error-msg">未收到回應，請重試。</div>';
+
+  } catch (e) {
+    pane.innerHTML = `<div class="error-msg">❌ 連線錯誤：${e.message}</div>`;
+  }
+}
+
+// --- Simple Markdown renderer ---
+function renderMd(text) {
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^---$/gm, '<hr>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hul]|<\/[hul]|<p|<\/p|<li|<hr)(.+)$/gm, '<p>$1</p>')
+    .replace(/💰/g, '<span style="color:#48d9a4">💰</span>')
+    .replace(/🏙️/g, '<span style="color:#6c63ff">🏙️</span>');
+  return html;
+}
+
+// --- Main analyze ---
+async function analyze() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('請先填入 Anthropic API Key'); return; }
+
+  const r = collectResume();
+  if (!r.edu_school && !r.work_exp && skillTags.length === 0) {
+    alert('請至少填寫學校、工作經歷或技能');
+    return;
+  }
+
+  const resume = resumeText(r);
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 分析中…';
+
+  // Show results card
+  const rc = document.getElementById('resultsCard');
+  rc.classList.add('show');
+  rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Reset panes
+  for (let i = 0; i < 3; i++) {
+    document.getElementById(`pane${i}`).innerHTML =
+      '<div class="loading"><div class="spinner"></div>等待分析…</div>';
+  }
+
+  switchTab(0);
+
+  // Run 3 analyses in parallel
+  await Promise.all([
+    callClaude(apiKey, PROMPTS.tw_grad(resume), 'pane0'),
+    callClaude(apiKey, PROMPTS.tw_job(resume), 'pane1'),
+    callClaude(apiKey, PROMPTS.us_grad(resume), 'pane2'),
+  ]);
+
+  btn.disabled = false;
+  btn.textContent = '🔍 重新分析';
+}
+</script>
+</body>
+</html>

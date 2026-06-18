@@ -1,0 +1,7 @@
+ledger.db
+*.pyc
+__pycache__/
+.env
+ngrok.exe
+hw06_temp.docx
+記帳.html

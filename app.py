@@ -1,7 +1,10 @@
 """個人記帳 Web 應用"""
 import sqlite3
+import os
+import json
+import requests
 from datetime import date
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, send_from_directory
 
 app = Flask(__name__)
 DB_PATH = "ledger.db"
@@ -90,6 +93,45 @@ def delete(id_):
     with get_conn() as conn:
         conn.execute("DELETE FROM transactions WHERE id=?", (id_,))
     return redirect(url_for("index", month=month))
+
+
+@app.route("/career")
+def career():
+    return send_from_directory(".", "career_analyzer.html")
+
+
+@app.route("/api/analyze", methods=["POST"])
+def analyze():
+    api_key = request.json.get("api_key", "").strip()
+    prompt = request.json.get("prompt", "").strip()
+
+    if not api_key:
+        return jsonify({"error": "缺少 API Key"}), 400
+    if not prompt:
+        return jsonify({"error": "缺少 prompt"}), 400
+
+    def stream():
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-6",
+                "max_tokens": 2000,
+                "stream": True,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            stream=True,
+            timeout=120,
+        )
+        for line in resp.iter_lines():
+            if line:
+                yield line.decode("utf-8") + "\n"
+
+    return Response(stream(), content_type="text/event-stream")
 
 
 if __name__ == "__main__":
