@@ -214,6 +214,10 @@
         <label>GPA（選填）</label>
         <input type="text" id="edu_gpa" placeholder="例：3.8 / 4.0 或 85 分" />
       </div>
+      <div class="field">
+        <label>系排名 %（非常重要）</label>
+        <input type="text" id="edu_rank" placeholder="例：前 40%、前 10%、後 30%" />
+      </div>
     </div>
 
     <div class="section-label">語言能力</div>
@@ -346,6 +350,7 @@ function collectResume() {
     edu_school: document.getElementById('edu_school').value,
     edu_dept: document.getElementById('edu_dept').value,
     edu_gpa: document.getElementById('edu_gpa').value,
+    edu_rank: document.getElementById('edu_rank').value,
     lang_en: document.getElementById('lang_en').value,
     lang_other: document.getElementById('lang_other').value,
     work_exp: document.getElementById('work_exp').value,
@@ -358,7 +363,7 @@ function collectResume() {
 
 function resumeText(r) {
   return `
-學歷：${r.edu_level}，${r.edu_school} ${r.edu_dept}${r.edu_gpa ? `，GPA ${r.edu_gpa}` : ''}
+學歷：${r.edu_level}，${r.edu_school} ${r.edu_dept}${r.edu_gpa ? `，GPA ${r.edu_gpa}` : ''}${r.edu_rank ? `，系排 ${r.edu_rank}` : ''}
 英文能力：${r.lang_en}${r.lang_other ? `；其他語言：${r.lang_other}` : ''}
 工作/實習經歷：
 ${r.work_exp || '（無）'}
@@ -371,7 +376,16 @@ ${r.work_exp || '（無）'}
 
 // --- Prompts ---
 const PROMPTS = {
-  tw_grad: (resume) => `你是台灣研究所申請顧問。根據以下履歷，推薦適合申請的台灣研究所，並附上花費資訊。
+  tw_grad: (resume) => `你是台灣研究所申請顧問，你的分析必須誠實、嚴格、符合現實，不可過度樂觀。
+
+以下是台灣頂尖研究所的實際錄取門檻（非官方宣傳，而是實際錄取標準）：
+- 台大電機/資工：通常需要系排前 5%，或頂大學生系排前 15%
+- 清大/交大/成大電機資工：通常需要系排前 10-20%，一般私立大學生需前 5-10%
+- 中字輩（中央/中山/中興）：系排前 20-35% 的一般國立大學生，或私立前 10-20%
+- 元智/中原/逢甲等私立：系排前 40-60% 可考慮
+- 私立大學系排 40% 以上申請台清交成幾乎沒有希望，請誠實告知申請者
+
+請根據申請者的學校、系所、系排來嚴格評估，不要推薦明顯錄取率極低的學校作為「衝刺校」，而要作為「夢想校（錄取率極低）」並明確說明機率。
 
 履歷：
 ${resume}
@@ -379,22 +393,21 @@ ${resume}
 請依照以下格式輸出（使用 Markdown）：
 
 ## 📊 你的競爭力分析
-簡要說明申請者的強項與弱項（3–5 點）
+誠實評估申請者的強項與弱項，包含系排對應的現實錄取機率
 
 ## 🏆 推薦研究所清單
 
-依難度分三個層級：衝刺校、目標校、保底校。
+依難度分三個層級：夢想校（低機率但可試）、目標校（有機會）、穩上校。
 每所學校請包含：
 - **學校名稱 + 系所**
-- 入學門檻（GPA、筆試、備審重點）
-- 為什麼適合這位申請者
+- 實際錄取門檻（系排、GPA 要求）與申請者的勝算（%）
 - 💰 費用試算：
   - 學費：每學期/每年
-  - 台北月生活費 OR 外縣市月生活費（依校址）
-  - **年總花費估算**（學費 + 生活費）
+  - 當地月生活費
+  - **年總花費估算**
 
 ## 💡 備審 & 面試建議
-針對這位申請者的具體建議`,
+針對這位申請者的具體且現實的建議`,
 
   tw_job: (resume) => `你是台灣職涯顧問。根據以下履歷，推薦適合的職位與公司，並附上薪資與生活費資訊。
 
