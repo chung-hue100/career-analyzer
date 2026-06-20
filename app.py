@@ -118,8 +118,8 @@ def analyze():
                 "content-type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",
-                "max_tokens": 4096,
+                "model": "llama-3.1-8b-instant",
+                "max_tokens": 3000,
                 "stream": False,
                 "messages": [{"role": "user", "content": prompt}],
             },
