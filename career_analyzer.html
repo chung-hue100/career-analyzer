@@ -617,7 +617,7 @@ ${r.base}
 - **畢業出路**：OPT 期間適合的公司類型，H1B 現實評估`,
 };
 
-// --- Call Groq via local Flask backend (streaming) ---
+// --- Call Groq via Flask backend (non-streaming) ---
 async function callClaude(prompt, paneId) {
   const pane = document.getElementById(paneId);
   pane.innerHTML = '<div class="loading"><div class="spinner"></div>AI 分析中…</div>';
@@ -629,44 +629,14 @@ async function callClaude(prompt, paneId) {
       body: JSON.stringify({ prompt }),
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      pane.innerHTML = `<div class="error-msg">❌ 錯誤：${err.error || res.statusText}</div>`;
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      pane.innerHTML = `<div class="error-msg">❌ 錯誤：${data.error || res.statusText}</div>`;
       return;
     }
 
-    pane.innerHTML = '';
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // 保留不完整的最後一行
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.error) {
-              pane.innerHTML = `<div class="error-msg">❌ API 錯誤：${parsed.error}</div>`;
-              return;
-            }
-            const text = parsed.choices?.[0]?.delta?.content;
-            if (text) {
-              fullText += text;
-              pane.innerHTML = renderMd(fullText);
-            }
-          } catch {}
-        }
-      }
-    }
-    if (!fullText) pane.innerHTML = '<div class="error-msg">未收到回應，請重試。</div>';
+    pane.innerHTML = renderMd(data.result);
 
   } catch (e) {
     pane.innerHTML = `<div class="error-msg">❌ 連線錯誤：${e.message}</div>`;

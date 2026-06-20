@@ -110,36 +110,28 @@ def analyze():
     if not prompt:
         return jsonify({"error": "缺少 prompt"}), 400
 
-    def stream():
-        try:
-            resp = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "max_tokens": 4096,
-                    "stream": True,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
-                stream=True,
-                timeout=120,
-            )
-            if resp.status_code != 200:
-                err_body = resp.text[:500]
-                yield f"data: {{\"error\": \"Groq API error {resp.status_code}: {err_body}\"}}\n"
-                return
-            for line in resp.iter_lines():
-                if line:
-                    decoded = line.decode("utf-8")
-                    if decoded.startswith("data: "):
-                        yield decoded + "\n"
-        except Exception as e:
-            yield f"data: {{\"error\": \"{str(e)}\"}}\n"
-
-    return Response(stream(), content_type="text/event-stream")
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "max_tokens": 4096,
+                "stream": False,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120,
+        )
+        data = resp.json()
+        if resp.status_code != 200:
+            return jsonify({"error": f"Groq {resp.status_code}: {data.get('error', {}).get('message', resp.text[:200])}"}), 500
+        content = data["choices"][0]["message"]["content"]
+        return jsonify({"result": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
