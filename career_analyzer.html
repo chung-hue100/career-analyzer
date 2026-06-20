@@ -6,16 +6,16 @@
 <title>履歷分析器 — 升學 & 求職顧問</title>
 <style>
   :root {
-    --bg: #F7F4F0;
-    --surface: #FFFFFF;
-    --surface2: #F2EDE8;
-    --border: #E0D8CF;
-    --accent: #8B6F47;
-    --accent2: #6B8F71;
-    --accent3: #C4956A;
-    --text: #2C1F14;
-    --text2: #7A6552;
-    --text3: #A8917A;
+    --bg: #EBEBEB;
+    --surface: #F7F7F7;
+    --surface2: #E2E2E2;
+    --border: #CACACA;
+    --accent: #2E2E2E;
+    --accent2: #5A5A5A;
+    --accent3: #C4A84F;
+    --text: #1A1A1A;
+    --text2: #555555;
+    --text3: #909090;
     --radius: 14px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -137,8 +137,8 @@
 
   /* Error */
   .error-msg {
-    background: #FDF0EE; border: 1.5px solid #E8C4BC; border-radius: 10px;
-    padding: 14px 18px; color: #9B4733; font-size: 14px; margin-top: 16px;
+    background: #F5F0F0; border: 1.5px solid #CCBCBC; border-radius: 10px;
+    padding: 14px 18px; color: #7A3A3A; font-size: 14px; margin-top: 16px;
   }
 
   /* Markdown rendering */
@@ -158,7 +158,7 @@
   .md hr { border: none; border-top: 1.5px solid var(--border); margin: 20px 0; }
   .md blockquote {
     border-left: 3px solid var(--accent3); padding: 10px 16px;
-    background: #FBF7F3; border-radius: 0 8px 8px 0; margin: 12px 0; color: var(--text2);
+    background: #F0F0F0; border-radius: 0 8px 8px 0; margin: 12px 0; color: var(--text2);
   }
 
   /* Markdown tables */
@@ -200,12 +200,14 @@
   }
   .goal-tab-btn.active { background: #FBF8F5; color: var(--accent); font-weight: 700; }
   .goal-tab-content {
-    background: #FBF8F5; border: 1.5px solid var(--border);
+    background: #E8E8E8; border: 1.5px solid var(--border);
     border-radius: 0 0 10px 10px; padding: 18px 20px;
   }
   .goal-pane { display: none; }
   .goal-pane.active { display: block; }
   .goal-pane .form-grid { margin-top: 0; }
+
+  .md tr:hover td { background: #E6E6E6; }
 
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
