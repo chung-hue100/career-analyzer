@@ -119,7 +119,7 @@ def analyze():
             },
             json={
                 "model": "llama-3.3-70b-versatile",
-                "max_tokens": 2000,
+                "max_tokens": 4096,
                 "stream": True,
                 "messages": [{"role": "user", "content": prompt}],
             },
