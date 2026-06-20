@@ -161,30 +161,58 @@
     background: #FBF7F3; border-radius: 0 8px 8px 0; margin: 12px 0; color: var(--text2);
   }
 
-  /* School / Job cards in result */
-  .result-card {
-    background: var(--surface2); border: 1.5px solid var(--border);
-    border-radius: 11px; padding: 16px 18px; margin: 12px 0;
+  /* Markdown tables */
+  .md table {
+    width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px;
+    border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border);
   }
-  .result-card .badge {
-    display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px;
-    border-radius: 20px; margin-bottom: 8px; letter-spacing: 0.5px;
+  .md th {
+    background: var(--surface2); color: var(--accent); font-weight: 700;
+    padding: 10px 13px; text-align: left; border-bottom: 1.5px solid var(--border);
+    font-size: 12px; letter-spacing: 0.3px;
   }
-  .badge-dream { background: #F5E8D8; color: #8B5A2B; }
-  .badge-target { background: #E0EDE2; color: #3D7047; }
-  .badge-safe { background: #E8EAF5; color: #3D4E8B; }
-  .cost-row {
-    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
-    background: #fff; border-radius: 8px; padding: 10px 14px;
-    border: 1px solid var(--border);
+  .md td {
+    padding: 9px 13px; border-bottom: 1px solid var(--border); color: var(--text);
+    vertical-align: top; line-height: 1.5;
   }
-  .cost-item { font-size: 12px; color: var(--text2); }
-  .cost-item strong { color: var(--accent); font-size: 13px; display: block; margin-bottom: 2px; }
+  .md tr:last-child td { border-bottom: none; }
+  .md tr:hover td { background: #FBF8F5; }
+
+  /* Expandable detail rows */
+  .detail-toggle {
+    cursor: pointer; color: var(--accent); font-size: 12px; font-weight: 600;
+    background: none; border: none; padding: 0; font-family: inherit; text-decoration: underline;
+  }
+  .detail-row { display: none; }
+  .detail-row.open { display: table-row; }
+  .detail-cell {
+    background: #FBF8F5; padding: 12px 14px; font-size: 13px;
+    border-bottom: 1px solid var(--border); color: var(--text2);
+  }
+
+  /* Goal section tabs (form) */
+  .goal-tabs { display: flex; gap: 6px; margin-bottom: 0; margin-top: 24px; }
+  .goal-tab-btn {
+    flex: 1; padding: 10px 8px; background: var(--surface2); border: 1.5px solid var(--border);
+    border-bottom: none; border-radius: 9px 9px 0 0; color: var(--text2);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    text-align: center; font-family: inherit;
+  }
+  .goal-tab-btn.active { background: #FBF8F5; color: var(--accent); font-weight: 700; }
+  .goal-tab-content {
+    background: #FBF8F5; border: 1.5px solid var(--border);
+    border-radius: 0 0 10px 10px; padding: 18px 20px;
+  }
+  .goal-pane { display: none; }
+  .goal-pane.active { display: block; }
+  .goal-pane .form-grid { margin-top: 0; }
 
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
     header { padding: 16px 20px; }
     .card { padding: 20px; }
+    .md table { font-size: 12px; }
+    .md th, .md td { padding: 7px 9px; }
   }
 </style>
 </head>
@@ -287,16 +315,100 @@
       </div>
     </div>
 
-    <div class="section-label">目標 & 備註</div>
-    <div class="form-grid">
-      <div class="field">
-        <label>感興趣的領域 / 方向</label>
-        <input type="text" id="interest" placeholder="例：AI、金融科技、半導體、產品管理" />
+    <div class="section-label">目標設定（依分析類型填寫）</div>
+    <div class="goal-tabs">
+      <button class="goal-tab-btn active" onclick="switchGoalTab(0)">🎓 台灣研究所</button>
+      <button class="goal-tab-btn" onclick="switchGoalTab(1)">🏢 台灣求職</button>
+      <button class="goal-tab-btn" onclick="switchGoalTab(2)">✈️ 美國碩士</button>
+    </div>
+    <div class="goal-tab-content">
+
+      <!-- 台灣研究所 -->
+      <div class="goal-pane active" id="gpane0">
+        <div class="form-grid">
+          <div class="field">
+            <label>感興趣的系所 / 研究領域</label>
+            <input type="text" id="tw_interest" placeholder="例：電機、資工、AI、光電、半導體" />
+          </div>
+          <div class="field">
+            <label>可接受的月生活費預算（NTD）</label>
+            <input type="text" id="tw_budget" placeholder="例：15000、20000" />
+          </div>
+          <div class="field">
+            <label>偏好城市（選填）</label>
+            <input type="text" id="tw_city" placeholder="例：台北、新竹、台南、不限" />
+          </div>
+          <div class="field">
+            <label>推甄 or 考試 or 兩者都考慮</label>
+            <select id="tw_apply_type">
+              <option value="兩者都考慮">兩者都考慮</option>
+              <option value="推甄為主">推甄為主</option>
+              <option value="考試為主">考試入學為主</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="field">
-        <label>預算或特別考量（選填）</label>
-        <input type="text" id="budget" placeholder="例：希望就讀公費，或月支出不超過 3 萬" />
+
+      <!-- 台灣求職 -->
+      <div class="goal-pane" id="gpane1">
+        <div class="form-grid">
+          <div class="field">
+            <label>感興趣的產業 / 職位方向</label>
+            <input type="text" id="job_interest" placeholder="例：IC設計、軟體工程師、半導體製程、AI" />
+          </div>
+          <div class="field">
+            <label>偏好工作城市</label>
+            <input type="text" id="job_city" placeholder="例：台北、新竹、台南、不限" />
+          </div>
+          <div class="field">
+            <label>期望月薪（NTD，選填）</label>
+            <input type="text" id="job_salary" placeholder="例：40000、60000以上" />
+          </div>
+          <div class="field">
+            <label>工作型態偏好</label>
+            <select id="job_type">
+              <option value="全職">全職</option>
+              <option value="實習">實習</option>
+              <option value="全職或實習都可">全職或實習都可</option>
+            </select>
+          </div>
+        </div>
       </div>
+
+      <!-- 美國碩士 -->
+      <div class="goal-pane" id="gpane2">
+        <div class="form-grid">
+          <div class="field">
+            <label>感興趣的系所方向</label>
+            <input type="text" id="us_interest" placeholder="例：EE、CS、ECE、Data Science、VLSI" />
+          </div>
+          <div class="field">
+            <label>托福成績（TOEFL iBT，選填）</label>
+            <input type="text" id="us_toefl" placeholder="例：95、105、尚未考" />
+          </div>
+          <div class="field">
+            <label>GRE 成績（選填）</label>
+            <input type="text" id="us_gre" placeholder="例：V152 Q168、尚未考、免 GRE" />
+          </div>
+          <div class="field">
+            <label>可負擔年預算（USD）</label>
+            <input type="text" id="us_budget" placeholder="例：50000、60000" />
+          </div>
+          <div class="field">
+            <label>偏好州 / 地區（選填）</label>
+            <input type="text" id="us_region" placeholder="例：加州、德州、東岸、不限" />
+          </div>
+          <div class="field">
+            <label>是否考慮有 TA/RA 機會的學校</label>
+            <select id="us_funding">
+              <option value="有機會就好">有機會就好</option>
+              <option value="必須有獎學金">必須有獎學金/TA/RA</option>
+              <option value="自費也可以">自費也可以</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div style="margin-top: 24px;">
@@ -352,73 +464,78 @@ function renderTags() {
 function removeTag(i) { skillTags.splice(i, 1); renderTags(); }
 
 
-// --- Tabs ---
+// --- Result tabs ---
 function switchTab(i) {
   document.querySelectorAll('.tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
   document.querySelectorAll('.tab-pane').forEach((p, j) => p.classList.toggle('active', i === j));
 }
 
+// --- Goal form tabs ---
+function switchGoalTab(i) {
+  document.querySelectorAll('.goal-tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  document.querySelectorAll('.goal-pane').forEach((p, j) => p.classList.toggle('active', i === j));
+}
+
 // --- Collect resume ---
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
 function collectResume() {
   return {
-    edu_level: document.getElementById('edu_level').value,
-    edu_school: document.getElementById('edu_school').value,
-    edu_dept: document.getElementById('edu_dept').value,
-    edu_gpa: document.getElementById('edu_gpa').value,
-    edu_rank: document.getElementById('edu_rank').value,
-    lang_en: document.getElementById('lang_en').value,
-    lang_other: document.getElementById('lang_other').value,
-    work_exp: document.getElementById('work_exp').value,
-    skills: skillTags.join(', '),
-    research: document.getElementById('research').value,
-    interest: document.getElementById('interest').value,
-    budget: document.getElementById('budget').value,
+    edu_level: g('edu_level'), edu_school: g('edu_school'),
+    edu_dept: g('edu_dept'), edu_gpa: g('edu_gpa'), edu_rank: g('edu_rank'),
+    lang_en: g('lang_en'), lang_other: g('lang_other'),
+    work_exp: g('work_exp'), skills: skillTags.join(', '), research: g('research'),
+    // Taiwan grad
+    tw_interest: g('tw_interest'), tw_budget: g('tw_budget'),
+    tw_city: g('tw_city'), tw_apply_type: g('tw_apply_type'),
+    // Taiwan job
+    job_interest: g('job_interest'), job_city: g('job_city'),
+    job_salary: g('job_salary'), job_type: g('job_type'),
+    // US
+    us_interest: g('us_interest'), us_toefl: g('us_toefl'),
+    us_gre: g('us_gre'), us_budget: g('us_budget'),
+    us_region: g('us_region'), us_funding: g('us_funding'),
   };
 }
 
-function resumeText(r) {
-  return `
+function baseProfile(r) {
+  return `【基本資料】
 學歷：${r.edu_level}，${r.edu_school} ${r.edu_dept}${r.edu_gpa ? `，GPA ${r.edu_gpa}` : ''}${r.edu_rank ? `，系排 ${r.edu_rank}` : ''}
 英文能力：${r.lang_en}${r.lang_other ? `；其他語言：${r.lang_other}` : ''}
-工作/實習經歷：
-${r.work_exp || '（無）'}
+工作/實習：${r.work_exp || '（無）'}
 技術技能：${r.skills || '（未填）'}
-研究/作品：${r.research || '（無）'}
-感興趣領域：${r.interest || '（未指定）'}
-預算考量：${r.budget || '（未指定）'}
-  `.trim();
+研究/作品：${r.research || '（無）'}`.trim();
 }
 
 // --- Prompts ---
 const PROMPTS = {
-  tw_grad: (resume) => `你是一位深耕台灣學術圈十年的研究所申請顧問，曾協助數百位學生申請，對各校系實際錄取標準有精準掌握。你的分析風格：誠實、精準、有溫度，不說空話，給出具體可執行的建議。
+  tw_grad: (r) => `你是台灣研究所申請顧問。規則：衝刺校=勝率20-35%，目標校=勝率40-60%，保底校=勝率70%+。必須根據申請者的學校類型（私立/國立）和系排嚴格對應。
 
-【台灣研究所實際錄取門檻（根據近三年實際錄取統計）】
-▸ 台大電機/資工/電信：私立大學幾乎無法上榜，國立大學需系排前 10% 以上
-▸ 清大/交大電機資工：國立大學系排前 15%，私立大學需系排前 3-5%（且須有研究成果/競賽加持）
-▸ 成大電機/資工：國立大學系排前 20-25%，私立需前 8-12%
-▸ 中央/中山/中興：國立大學系排前 35%，私立需前 15-25%
-▸ 元智/中原/淡江/逢甲：私立學生系排 40% 以內可合理評估
-▸ 輔仁/銘傳/東吳碩士：系排 50% 以上可考慮（依科系不同）
+私立大學電機/電資系所現實門檻（申請者學校若為私立，請以此為基準）：
+- 台大/清大/交大/成大電資所：系排前5%才有機會，前10%以上勝率仍低於10%，系排40%者請勿列入任何層級
+- 中央/中山/台科大/海洋：私立前10-15%可列衝刺，前20%勝率約15-25%
+- 中興/淡江/元智研究所（同校或同層級）：私立前25-35%可列目標，前40%勝率40-55%
+- 逢甲/銘傳/文化/輔仁碩士：私立前50%可列保底，勝率60-75%
 
-【特別注意】
-- 私立大學學生（如：元智、中原、逢甲、銘傳等）申請台清交成電資所，若系排在 20% 以上，錄取機率低於 5%，請如實告知
-- 若有研究發表、競賽得獎、實習強化，可提升約一個等級
-- 推甄管道比考試分發競爭更激烈，請分開評估
+申請者資料：
+${r.base}
+目標：感興趣系所=${r.tw_interest || '未指定'}，月生活費預算=${r.tw_budget || '未指定'}，偏好城市=${r.tw_city || '不限'}，申請方式=${r.tw_apply_type}
 
----
-申請者履歷：
-${resume}
----
+請輸出以下格式（Markdown）：
 
-請以以下 Markdown 格式輸出詳細分析：
+## 📊 競爭力評估
 
-## 📊 競爭力誠實評估
+用 2-3 句話直接說明這位申請者的現實位置，包含系排對應的錄取率區間。
 
-從以下三個面向分析：
-1. **學歷定位**：學校背景在台灣研究所市場的客觀評價
-2. **系排關鍵指標**：系排對照各校系錄取機率的現實分析（請給出具體百分比）
-3. **加分/扣分因素**：研究經歷、語言能力、競賽、實習等對申請的影響
+## 🏫 推薦學校總覽
+
+輸出 Markdown 表格，欄位：學校與系所 | 層級 | 勝率 | 推甄/考試難度 | 學費/年(NTD) | 當地月生活費 | 備註
+
+表格後針對每所學校各寫一段話說明：為什麼列在這個層級、申請者的優勢與弱點、具體提分建議。
+
+## 💡 備審 & 面試重點
+
+3-5 條針對這位申請者的具體建議。`,
 
 ---
 
@@ -447,106 +564,62 @@ ${resume}
 - 面試可能被問的問題與建議回答方向
 - 放榜前的準備行動清單`,
 
-  tw_job: (resume) => `你是一位熟悉台灣就業市場的職涯顧問，專精於電子、半導體、科技、軟體產業，了解各大公司的實際薪資結構與文化。你的分析要具體、現實，給出這位申請者「現在就能採取行動」的建議。
+  tw_job: (r) => `你是熟悉台灣半導體、科技、電子業就業市場的職涯顧問，了解各公司實際薪資與錄用標準。
 
-申請者履歷：
-${resume}
+申請者資料：
+${r.base}
+求職目標：產業/職位=${r.job_interest || '未指定'}，偏好城市=${r.job_city || '不限'}，期望月薪=${r.job_salary || '未指定'}，型態=${r.job_type}
 
----
-請以以下 Markdown 格式輸出：
+請輸出以下格式（Markdown）：
 
-## 📊 職涯競爭力分析
+## 📊 市場定位分析
 
-1. **市場定位**：這位申請者目前在台灣就業市場的客觀位置
-2. **核心競爭力**：最有優勢的 3 項技能/經驗，以及市場稀缺性
-3. **需要補強的缺口**：誠實指出目前阻礙更高薪資/職位的關鍵弱點
+2-3 句話說明這位申請者目前在台灣就業市場的客觀位置、最大優勢與需補強的弱點。
 
----
+## 💼 適合職位一覽
 
-## 💼 最適合的職位方向（3–5 種）
+輸出 Markdown 表格，欄位：職位類型 | 符合度 | 市場需求 | 起薪月薪(NTD) | 3年後月薪(NTD) | 主要技能門檻
 
-每種職位類型：
-- **職位名稱**（如：IC 設計工程師 / 韌體工程師 / 數位行銷）
-- 申請者符合度（%）與說明
-- 這類職位在台灣的市場需求度（高/中/低）
+列出 5-7 種職位類型，從最適合到較適合排序。
 
----
+## 🏢 推薦公司清單
 
-## 🏢 推薦公司清單（依競爭激烈程度分三層）
+輸出 Markdown 表格，欄位：公司 | 產業 | 推薦職位 | 起薪月薪 | 資深月薪 | 工作地點 | 月生活費 | 薪/活比 | 競爭程度
 
-### 🔥 頂尖企業（競爭激烈，但值得投）
-列出 3–4 家，每家包含：
-- **公司名稱**（產業別：如半導體/雲端/IC 設計）
-- 最適合的職位
-- 💰 薪資：起薪月薪 NTD / 3年後資深月薪 NTD（含年終估算）
-- 工作地點 + 當地月生活費估算
-- **生活品質比**（月薪 ÷ 生活費 = X 倍）
+分三區：**頂尖企業**（3-4家）、**強烈推薦**（3-4家）、**穩健選擇**（2-3家），在表格前用 ### 標示區隔。
 
-### ⭐ 強烈推薦（符合度高、薪資合理）
-同上，列出 3–4 家
+薪/活比 = 月薪 ÷ 月生活費，例如 2.5x。
 
-### 🟢 穩健選擇（門檻較低、適合累積經驗）
-同上，列出 2–3 家
+## 🚀 求職行動建議
 
----
+列出 4-5 條現在就能執行的具體行動，針對這位申請者的背景量身建議。`,
 
-## 🚀 六個月求職行動計畫
+  us_grad: (r) => `你是美國碩士申請顧問，熟悉亞洲學生申請美國理工科碩士的現實情況，包含錄取標準、費用、OPT/H1B 就業前景。
 
-給出具體、分步驟的行動建議：
-- 第 1–2 個月：準備什麼
-- 第 3–4 個月：投遞策略
-- 第 5–6 個月：面試準備與談薪技巧`,
+申請者資料：
+${r.base}
+申請目標：方向=${r.us_interest || '未指定'}，托福=${r.us_toefl || '未考/未填'}，GRE=${r.us_gre || '未考/未填'}，年預算=${r.us_budget ? r.us_budget+' USD' : '未指定'}，偏好地區=${r.us_region || '不限'}，獎學金需求=${r.us_funding}
 
-  us_grad: (resume) => `你是一位美國碩士申請顧問，擁有豐富的亞洲學生申請美國理工科碩士的諮詢經驗。你熟悉美國各校系的錄取偏好、獎學金機制、以及畢業後的就業前景（包含 OPT/H1B 現實狀況）。
-
-申請者履歷：
-${resume}
-
----
-請以以下 Markdown 格式輸出：
+請輸出以下格式（Markdown）：
 
 ## 📊 申請競爭力評估
 
-1. **GPA 換算分析**：台灣 GPA 換算美國標準後的市場定位
-2. **整體競爭力**：與申請同校系的台灣/亞洲學生相比的客觀位置
-3. **最大優勢 vs 最大風險**：各一到兩點，請誠實指出
-4. **是否需要 GRE/TOEFL**：依目標學校清單給出建議分數
+說明：台灣學校背景在美國的認知度、GPA 換算後的市場定位、托福/GRE 是否達標、最大優勢與風險各一點。
 
----
+## 🏫 推薦學校總覽
 
-## 🎯 推薦申請方向與科系
+輸出 Markdown 表格，欄位：學校 | 系所 | US News排名 | 錄取率 | 最低GPA | 托福要求 | GRE | 勝算評估 | 學費/年(USD) | 城市月生活費(USD) | 1.5年總費用(USD) | TA/RA機會
 
-說明為何推薦這個方向（結合申請者的背景與美國市場需求）
+列出 7-9 所，標示層級：衝刺(Dream) / 目標(Match) / 保底(Safe)，根據申請者年預算篩選掉超出範圍的學校。
 
----
-
-## 🏫 推薦學校清單
-
-### 🌟 衝刺校（Dream，錄取率 < 20%）
-2–3 所，每所包含：
-- **學校名稱 + 系所 + US News 排名**
-- 平均錄取 GPA / GRE / TOEFL
-- 申請者勝算評估（%）+ 提升勝算的具體建議
-- 💰 費用試算（以 1.5 年計算）：
-  - 學費/年
-  - 所在城市月生活費（USD）
-  - **總花費估算（USD）換算 NTD（匯率 32）**
-  - 獎學金/RA/TA 機會說明
-
-### ✅ 目標校（Match，錄取率 20–50%）
-3–4 所，同上格式
-
-### 🛡️ 保底校（Safe，錄取率 50%+）
-1–2 所，同上格式
-
----
+表格後針對每所學校用一句話說明為何推薦。
 
 ## 📝 申請準備建議
 
-- **SOP 核心論述**：這位申請者的 SOP 應該主打什麼故事/角度
-- **推薦信策略**：找哪類教授/主管最有效
-- **時程規劃**：從現在到申請截止的關鍵節點
-- **畢業後出路**：OPT 期間可以找哪類公司，H1B 的現實評估`,
+- **SOP 方向**：這位申請者應該主打什麼核心論述
+- **推薦信策略**：找哪類推薦人最有效
+- **時程規劃**：關鍵節點清單（考托福→選校→SOP→送件）
+- **畢業出路**：OPT 期間適合的公司類型，H1B 現實評估`,
 };
 
 // --- Call Groq via local Flask backend (streaming) ---
@@ -601,10 +674,29 @@ async function callClaude(prompt, paneId) {
   }
 }
 
-// --- Simple Markdown renderer ---
+// --- Markdown renderer with table support ---
 function renderMd(text) {
-  let html = text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // Escape HTML first
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Tables: collect pipe-table blocks and convert
+  s = s.replace(/((?:^\|.+\|\n?)+)/gm, block => {
+    const rows = block.trim().split('\n');
+    if (rows.length < 2) return block;
+    const isHeader = (r) => /^\|[-| :]+\|$/.test(r.trim());
+    let html = '<table>';
+    let inBody = false;
+    for (let i = 0; i < rows.length; i++) {
+      if (isHeader(rows[i])) { inBody = true; continue; }
+      const cells = rows[i].trim().replace(/^\||\|$/g, '').split('|');
+      const tag = (!inBody && i === 0) ? 'th' : 'td';
+      html += '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+    }
+    html += '</table>';
+    return html;
+  });
+
+  s = s
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -613,10 +705,14 @@ function renderMd(text) {
     .replace(/^---$/gm, '<hr>')
     .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hublp]|<\/[hublp]|<hr)(.+)$/gm, (m, p1) => p1.trim() ? `<p>${p1}</p>` : '');
-  return html;
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n\n+/g, '\n\n')
+    .split('\n\n').map(para => {
+      if (/^<[hut]/.test(para.trim())) return para;
+      if (!para.trim()) return '';
+      return `<p>${para.trim()}</p>`;
+    }).join('\n');
+  return s;
 }
 
 // --- Main analyze ---
@@ -627,17 +723,15 @@ async function analyze() {
     return;
   }
 
-  const resume = resumeText(r);
+  const profileData = { base: baseProfile(r), ...r };
   const btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.textContent = '⏳ 分析中…';
 
-  // Show results card
   const rc = document.getElementById('resultsCard');
   rc.classList.add('show');
   rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  // Reset panes
   for (let i = 0; i < 3; i++) {
     document.getElementById(`pane${i}`).innerHTML =
       '<div class="loading"><div class="spinner"></div>等待分析…</div>';
@@ -645,11 +739,10 @@ async function analyze() {
 
   switchTab(0);
 
-  // Run 3 analyses in parallel
   await Promise.all([
-    callClaude(PROMPTS.tw_grad(resume), 'pane0'),
-    callClaude(PROMPTS.tw_job(resume), 'pane1'),
-    callClaude(PROMPTS.us_grad(resume), 'pane2'),
+    callClaude(PROMPTS.tw_grad(profileData), 'pane0'),
+    callClaude(PROMPTS.tw_job(profileData), 'pane1'),
+    callClaude(PROMPTS.us_grad(profileData), 'pane2'),
   ]);
 
   btn.disabled = false;
