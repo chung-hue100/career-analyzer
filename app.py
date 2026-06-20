@@ -111,26 +111,33 @@ def analyze():
         return jsonify({"error": "缺少 prompt"}), 400
 
     def stream():
-        resp = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "content-type": "application/json",
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "max_tokens": 4096,
-                "stream": True,
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            stream=True,
-            timeout=120,
-        )
-        for line in resp.iter_lines():
-            if line:
-                decoded = line.decode("utf-8")
-                if decoded.startswith("data: "):
-                    yield decoded + "\n"
+        try:
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "max_tokens": 4096,
+                    "stream": True,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+                stream=True,
+                timeout=120,
+            )
+            if resp.status_code != 200:
+                err_body = resp.text[:500]
+                yield f"data: {{\"error\": \"Groq API error {resp.status_code}: {err_body}\"}}\n"
+                return
+            for line in resp.iter_lines():
+                if line:
+                    decoded = line.decode("utf-8")
+                    if decoded.startswith("data: "):
+                        yield decoded + "\n"
+        except Exception as e:
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n"
 
     return Response(stream(), content_type="text/event-stream")
 
