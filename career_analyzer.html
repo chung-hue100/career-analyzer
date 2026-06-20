@@ -6,78 +6,81 @@
 <title>履歷分析器 — 升學 & 求職顧問</title>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3250;
-    --accent: #6c63ff;
-    --accent2: #48d9a4;
-    --accent3: #ff6b6b;
-    --text: #e8eaf6;
-    --text2: #9098b8;
-    --radius: 12px;
+    --bg: #F7F4F0;
+    --surface: #FFFFFF;
+    --surface2: #F2EDE8;
+    --border: #E0D8CF;
+    --accent: #8B6F47;
+    --accent2: #6B8F71;
+    --accent3: #C4956A;
+    --text: #2C1F14;
+    --text2: #7A6552;
+    --text3: #A8917A;
+    --radius: 14px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif; min-height: 100vh; }
 
   header {
-    background: linear-gradient(135deg, #1a1d27 0%, #1e2240 100%);
+    background: #FFFFFF;
     border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex; align-items: center; gap: 14px;
+    padding: 22px 36px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 1px 8px rgba(139,111,71,0.07);
   }
-  header .logo { font-size: 28px; }
-  header h1 { font-size: 20px; font-weight: 700; color: var(--text); }
-  header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  header .logo { font-size: 26px; }
+  header h1 { font-size: 19px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+  header p { font-size: 12px; color: var(--text3); margin-top: 3px; letter-spacing: 0.3px; }
 
-  .container { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
 
-
-  /* Resume Form */
+  /* Cards */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 28px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(139,111,71,0.06);
   }
   .card-title {
-    font-size: 15px; font-weight: 700; margin-bottom: 18px;
-    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700; margin-bottom: 22px; color: var(--text);
+    display: flex; align-items: center; gap: 10px;
   }
   .card-title .dot {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
   }
 
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .form-grid.full { grid-template-columns: 1fr; }
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label { font-size: 12px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label { font-size: 11px; color: var(--text2); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
   .field input, .field select, .field textarea {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text); font-size: 14px; padding: 10px 12px; outline: none;
-    font-family: inherit; resize: vertical;
+    background: var(--surface2); border: 1.5px solid var(--border); border-radius: 9px;
+    color: var(--text); font-size: 14px; padding: 10px 13px; outline: none;
+    font-family: inherit; resize: vertical; transition: border-color 0.2s;
   }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); background: #fff; }
   .field textarea { min-height: 80px; }
-  .field select option { background: var(--surface2); }
+  .field select option { background: #fff; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--text3); }
 
   .section-label {
-    font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; margin: 20px 0 12px; padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
+    font-size: 10px; color: var(--accent); font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; margin: 24px 0 14px; padding-bottom: 7px;
+    border-bottom: 1.5px solid var(--border);
   }
 
   /* Tag input */
   .tag-input-wrap {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface2); border: 1.5px solid var(--border); border-radius: 9px;
     padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px; cursor: text;
-    min-height: 44px; align-items: flex-start;
+    min-height: 44px; align-items: flex-start; transition: border-color 0.2s;
   }
-  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-input-wrap:focus-within { border-color: var(--accent); background: #fff; }
   .tag {
     background: var(--accent); color: #fff; border-radius: 6px;
-    padding: 3px 10px 3px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;
+    padding: 3px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;
   }
   .tag .rm { cursor: pointer; opacity: 0.7; font-size: 15px; line-height: 1; }
   .tag .rm:hover { opacity: 1; }
@@ -85,58 +88,45 @@
     background: transparent; border: none; outline: none; color: var(--text);
     font-size: 14px; flex: 1; min-width: 80px; padding: 2px 0;
   }
+  .tag-input-wrap input::placeholder { color: var(--text3); }
 
   /* Analyze button */
   .analyze-btn {
-    width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), #8b7fff);
-    border: none; border-radius: var(--radius); color: #fff; font-size: 16px;
-    font-weight: 700; cursor: pointer; margin-top: 4px; letter-spacing: 0.5px;
-    transition: opacity 0.2s, transform 0.1s;
+    width: 100%; padding: 15px; background: var(--accent);
+    border: none; border-radius: var(--radius); color: #fff; font-size: 15px;
+    font-weight: 700; cursor: pointer; margin-top: 6px; letter-spacing: 0.5px;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 3px 12px rgba(139,111,71,0.25);
   }
-  .analyze-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .analyze-btn:hover { background: #7a5f3a; transform: translateY(-1px); box-shadow: 0 5px 16px rgba(139,111,71,0.3); }
   .analyze-btn:active { transform: translateY(0); }
-  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
   /* Results */
   .results-card { display: none; }
   .results-card.show { display: block; }
 
-  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 0; }
   .tab-btn {
-    flex: 1; padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border);
-    border-bottom: none; border-radius: 10px 10px 0 0; color: var(--text2);
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-    text-align: center;
+    flex: 1; padding: 12px 8px; background: var(--surface2); border: 1.5px solid var(--border);
+    border-bottom: none; border-radius: 11px 11px 0 0; color: var(--text2);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    text-align: center; font-family: inherit;
   }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .tab-btn:hover { color: var(--text); background: #EDE8E2; }
+  .tab-btn.active { background: var(--surface); color: var(--accent); border-color: var(--border); border-bottom-color: #fff; font-weight: 700; }
 
   .tab-content {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 0 0 var(--radius) var(--radius); padding: 24px; min-height: 300px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius); padding: 28px; min-height: 300px;
   }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
 
-  /* Streaming text */
-  .stream-output {
-    font-size: 14px; line-height: 1.8; color: var(--text);
-    white-space: pre-wrap; word-break: break-word;
-  }
-  .stream-output h2 { font-size: 17px; color: var(--accent2); margin: 20px 0 10px; }
-  .stream-output h3 { font-size: 15px; color: var(--accent); margin: 14px 0 8px; }
-  .stream-output strong { color: var(--accent2); }
-  .stream-output .school-card, .stream-output .job-card {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; margin: 10px 0;
-  }
-  .stream-output ul { padding-left: 18px; }
-  .stream-output li { margin-bottom: 4px; }
-
-  /* Loading spinner */
+  /* Loading */
   .loading {
-    display: flex; align-items: center; gap: 12px; color: var(--text2); font-size: 14px;
-    padding: 40px 0; justify-content: center;
+    display: flex; align-items: center; gap: 12px; color: var(--text3); font-size: 14px;
+    padding: 50px 0; justify-content: center;
   }
   .spinner {
     width: 20px; height: 20px; border: 2px solid var(--border);
@@ -147,29 +137,54 @@
 
   /* Error */
   .error-msg {
-    background: #2a1515; border: 1px solid #5c2323; border-radius: 10px;
-    padding: 14px 18px; color: #ff8a8a; font-size: 14px; margin-top: 16px;
+    background: #FDF0EE; border: 1.5px solid #E8C4BC; border-radius: 10px;
+    padding: 14px 18px; color: #9B4733; font-size: 14px; margin-top: 16px;
   }
 
-  /* Markdown-style rendering */
-  .md h2 { font-size: 16px; color: var(--accent2); margin: 18px 0 8px; font-weight: 700; }
-  .md h3 { font-size: 14px; color: var(--accent); margin: 12px 0 6px; font-weight: 700; }
-  .md p { margin-bottom: 8px; }
-  .md ul { padding-left: 20px; margin-bottom: 8px; }
-  .md li { margin-bottom: 3px; }
-  .md strong { color: #ffd97d; }
-  .md em { color: var(--accent2); font-style: normal; font-weight: 600; }
-  .md hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-  .md .cost-box {
-    background: #1a2635; border-left: 3px solid var(--accent2);
-    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 8px 0;
-    font-size: 13px;
+  /* Markdown rendering */
+  .md { font-size: 14px; line-height: 1.85; color: var(--text); }
+  .md h2 {
+    font-size: 16px; color: var(--accent); margin: 24px 0 10px; font-weight: 800;
+    padding-bottom: 8px; border-bottom: 1.5px solid var(--border);
   }
+  .md h2:first-child { margin-top: 0; }
+  .md h3 { font-size: 14px; color: var(--text); margin: 16px 0 7px; font-weight: 700; }
+  .md p { margin-bottom: 10px; color: var(--text); }
+  .md ul { padding-left: 20px; margin-bottom: 10px; }
+  .md ol { padding-left: 20px; margin-bottom: 10px; }
+  .md li { margin-bottom: 5px; }
+  .md strong { color: var(--accent); font-weight: 700; }
+  .md em { color: var(--accent2); font-style: normal; font-weight: 600; }
+  .md hr { border: none; border-top: 1.5px solid var(--border); margin: 20px 0; }
+  .md blockquote {
+    border-left: 3px solid var(--accent3); padding: 10px 16px;
+    background: #FBF7F3; border-radius: 0 8px 8px 0; margin: 12px 0; color: var(--text2);
+  }
+
+  /* School / Job cards in result */
+  .result-card {
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 11px; padding: 16px 18px; margin: 12px 0;
+  }
+  .result-card .badge {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; margin-bottom: 8px; letter-spacing: 0.5px;
+  }
+  .badge-dream { background: #F5E8D8; color: #8B5A2B; }
+  .badge-target { background: #E0EDE2; color: #3D7047; }
+  .badge-safe { background: #E8EAF5; color: #3D4E8B; }
+  .cost-row {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+    background: #fff; border-radius: 8px; padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+  .cost-item { font-size: 12px; color: var(--text2); }
+  .cost-item strong { color: var(--accent); font-size: 13px; display: block; margin-bottom: 2px; }
 
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
-    .tabs { flex-direction: column; }
-    .tab-btn { border-radius: 8px 8px 0 0; }
+    header { padding: 16px 20px; }
+    .card { padding: 20px; }
   }
 </style>
 </head>
@@ -376,95 +391,162 @@ ${r.work_exp || '（無）'}
 
 // --- Prompts ---
 const PROMPTS = {
-  tw_grad: (resume) => `你是台灣研究所申請顧問，你的分析必須誠實、嚴格、符合現實，不可過度樂觀。
+  tw_grad: (resume) => `你是一位深耕台灣學術圈十年的研究所申請顧問，曾協助數百位學生申請，對各校系實際錄取標準有精準掌握。你的分析風格：誠實、精準、有溫度，不說空話，給出具體可執行的建議。
 
-以下是台灣頂尖研究所的實際錄取門檻（非官方宣傳，而是實際錄取標準）：
-- 台大電機/資工：通常需要系排前 5%，或頂大學生系排前 15%
-- 清大/交大/成大電機資工：通常需要系排前 10-20%，一般私立大學生需前 5-10%
-- 中字輩（中央/中山/中興）：系排前 20-35% 的一般國立大學生，或私立前 10-20%
-- 元智/中原/逢甲等私立：系排前 40-60% 可考慮
-- 私立大學系排 40% 以上申請台清交成幾乎沒有希望，請誠實告知申請者
+【台灣研究所實際錄取門檻（根據近三年實際錄取統計）】
+▸ 台大電機/資工/電信：私立大學幾乎無法上榜，國立大學需系排前 10% 以上
+▸ 清大/交大電機資工：國立大學系排前 15%，私立大學需系排前 3-5%（且須有研究成果/競賽加持）
+▸ 成大電機/資工：國立大學系排前 20-25%，私立需前 8-12%
+▸ 中央/中山/中興：國立大學系排前 35%，私立需前 15-25%
+▸ 元智/中原/淡江/逢甲：私立學生系排 40% 以內可合理評估
+▸ 輔仁/銘傳/東吳碩士：系排 50% 以上可考慮（依科系不同）
 
-請根據申請者的學校、系所、系排來嚴格評估，不要推薦明顯錄取率極低的學校作為「衝刺校」，而要作為「夢想校（錄取率極低）」並明確說明機率。
+【特別注意】
+- 私立大學學生（如：元智、中原、逢甲、銘傳等）申請台清交成電資所，若系排在 20% 以上，錄取機率低於 5%，請如實告知
+- 若有研究發表、競賽得獎、實習強化，可提升約一個等級
+- 推甄管道比考試分發競爭更激烈，請分開評估
 
-履歷：
+---
+申請者履歷：
 ${resume}
+---
 
-請依照以下格式輸出（使用 Markdown）：
+請以以下 Markdown 格式輸出詳細分析：
 
-## 📊 你的競爭力分析
-誠實評估申請者的強項與弱項，包含系排對應的現實錄取機率
+## 📊 競爭力誠實評估
+
+從以下三個面向分析：
+1. **學歷定位**：學校背景在台灣研究所市場的客觀評價
+2. **系排關鍵指標**：系排對照各校系錄取機率的現實分析（請給出具體百分比）
+3. **加分/扣分因素**：研究經歷、語言能力、競賽、實習等對申請的影響
+
+---
 
 ## 🏆 推薦研究所清單
 
-依難度分三個層級：夢想校（低機率但可試）、目標校（有機會）、穩上校。
-每所學校請包含：
-- **學校名稱 + 系所**
-- 實際錄取門檻（系排、GPA 要求）與申請者的勝算（%）
-- 💰 費用試算：
-  - 學費：每學期/每年
-  - 當地月生活費
-  - **年總花費估算**
+### 🌟 衝刺校（建議 1–2 所，錄取率低但值得嘗試）
+對每所學校：
+- **學校 + 系所**（如：成功大學電機工程研究所）
+- 實際錄取門檻 vs 申請者條件差距分析
+- 錄取機率評估（如：8–12%）
+- 如何提高勝算的具體建議
+- 💰 就讀費用：學費/年 + 台南/台北/新竹月生活費 + **年總花費**
 
-## 💡 備審 & 面試建議
-針對這位申請者的具體且現實的建議`,
+### ✅ 目標校（建議 2–3 所，有合理勝算）
+同上格式
 
-  tw_job: (resume) => `你是台灣職涯顧問。根據以下履歷，推薦適合的職位與公司，並附上薪資與生活費資訊。
+### 🛡️ 穩上校（建議 1–2 所，高機率錄取）
+同上格式
 
-履歷：
+---
+
+## 💡 備審資料 & 面試準備
+
+針對這位申請者的具體建議：
+- 備審資料的重點方向（SOP 如何呈現、要突出哪些經歷）
+- 面試可能被問的問題與建議回答方向
+- 放榜前的準備行動清單`,
+
+  tw_job: (resume) => `你是一位熟悉台灣就業市場的職涯顧問，專精於電子、半導體、科技、軟體產業，了解各大公司的實際薪資結構與文化。你的分析要具體、現實，給出這位申請者「現在就能採取行動」的建議。
+
+申請者履歷：
 ${resume}
 
-請依照以下格式輸出（使用 Markdown）：
+---
+請以以下 Markdown 格式輸出：
 
 ## 📊 職涯競爭力分析
-分析申請者適合的職位方向、優勢與需加強之處
 
-## 💼 推薦職位類型
-列出 3–5 種最適合的職位類型，每種包含：
-- 職位名稱與說明
-- 需要的核心技能（申請者符合/不符合哪些）
+1. **市場定位**：這位申請者目前在台灣就業市場的客觀位置
+2. **核心競爭力**：最有優勢的 3 項技能/經驗，以及市場稀缺性
+3. **需要補強的缺口**：誠實指出目前阻礙更高薪資/職位的關鍵弱點
 
-## 🏢 推薦台灣公司清單
-列出 8–12 家具體公司，分為：
-**頂尖企業（競爭激烈）**、**適合目標（強烈推薦）**、**穩健選擇**
-每家公司包含：
-- **公司名稱**（產業）
-- 適合職位
-- 💰 薪資範圍：起薪 / 3–5 年資深薪資（月薪 NTD）
-- 🏙️ 工作城市：該城市月生活費估算
-- **薪資/生活費比**（月薪 ÷ 月支出）
+---
 
-## 🚀 求職建議
-針對這位申請者的具體行動建議`,
+## 💼 最適合的職位方向（3–5 種）
 
-  us_grad: (resume) => `你是美國碩士申請顧問。根據以下履歷，推薦適合申請的美國碩士項目，並附上詳細費用。
+每種職位類型：
+- **職位名稱**（如：IC 設計工程師 / 韌體工程師 / 數位行銷）
+- 申請者符合度（%）與說明
+- 這類職位在台灣的市場需求度（高/中/低）
 
-履歷：
+---
+
+## 🏢 推薦公司清單（依競爭激烈程度分三層）
+
+### 🔥 頂尖企業（競爭激烈，但值得投）
+列出 3–4 家，每家包含：
+- **公司名稱**（產業別：如半導體/雲端/IC 設計）
+- 最適合的職位
+- 💰 薪資：起薪月薪 NTD / 3年後資深月薪 NTD（含年終估算）
+- 工作地點 + 當地月生活費估算
+- **生活品質比**（月薪 ÷ 生活費 = X 倍）
+
+### ⭐ 強烈推薦（符合度高、薪資合理）
+同上，列出 3–4 家
+
+### 🟢 穩健選擇（門檻較低、適合累積經驗）
+同上，列出 2–3 家
+
+---
+
+## 🚀 六個月求職行動計畫
+
+給出具體、分步驟的行動建議：
+- 第 1–2 個月：準備什麼
+- 第 3–4 個月：投遞策略
+- 第 5–6 個月：面試準備與談薪技巧`,
+
+  us_grad: (resume) => `你是一位美國碩士申請顧問，擁有豐富的亞洲學生申請美國理工科碩士的諮詢經驗。你熟悉美國各校系的錄取偏好、獎學金機制、以及畢業後的就業前景（包含 OPT/H1B 現實狀況）。
+
+申請者履歷：
 ${resume}
 
-請依照以下格式輸出（使用 Markdown）：
+---
+請以以下 Markdown 格式輸出：
 
-## 📊 申請競爭力分析
-分析申請者的優勢、劣勢，以及是否需要補強（GRE/TOEFL/研究經驗等）
+## 📊 申請競爭力評估
 
-## 🎯 推薦申請方向
-建議申請的科系/領域，以及理由
+1. **GPA 換算分析**：台灣 GPA 換算美國標準後的市場定位
+2. **整體競爭力**：與申請同校系的台灣/亞洲學生相比的客觀位置
+3. **最大優勢 vs 最大風險**：各一到兩點，請誠實指出
+4. **是否需要 GRE/TOEFL**：依目標學校清單給出建議分數
+
+---
+
+## 🎯 推薦申請方向與科系
+
+說明為何推薦這個方向（結合申請者的背景與美國市場需求）
+
+---
 
 ## 🏫 推薦學校清單
 
-分三個層級：衝刺校（Dream）、目標校（Match）、保底校（Safe）
-每所學校請包含：
-- **學校名稱 + 系所 + QS/US News 排名**
-- 錄取門檻（GPA、GRE/TOEFL 要求、研究背景）
-- 申請難度與申請者的勝算評估
-- 💰 費用試算（以學制 1.5–2 年計算）：
-  - 學費（每學期/全程）
-  - 所在城市生活費（月 USD）
-  - **年總花費 USD + 換算 NTD**
-  - 是否有獎學金/TA/RA 機會
+### 🌟 衝刺校（Dream，錄取率 < 20%）
+2–3 所，每所包含：
+- **學校名稱 + 系所 + US News 排名**
+- 平均錄取 GPA / GRE / TOEFL
+- 申請者勝算評估（%）+ 提升勝算的具體建議
+- 💰 費用試算（以 1.5 年計算）：
+  - 學費/年
+  - 所在城市月生活費（USD）
+  - **總花費估算（USD）換算 NTD（匯率 32）**
+  - 獎學金/RA/TA 機會說明
+
+### ✅ 目標校（Match，錄取率 20–50%）
+3–4 所，同上格式
+
+### 🛡️ 保底校（Safe，錄取率 50%+）
+1–2 所，同上格式
+
+---
 
 ## 📝 申請準備建議
-SOP 方向、推薦信、Portfolio 等具體建議`,
+
+- **SOP 核心論述**：這位申請者的 SOP 應該主打什麼故事/角度
+- **推薦信策略**：找哪類教授/主管最有效
+- **時程規劃**：從現在到申請截止的關鍵節點
+- **畢業後出路**：OPT 期間可以找哪類公司，H1B 的現實評估`,
 };
 
 // --- Call Groq via local Flask backend (streaming) ---
@@ -527,13 +609,13 @@ function renderMd(text) {
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/^---$/gm, '<hr>')
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
     .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul]|<\/[hul]|<p|<\/p|<li|<hr)(.+)$/gm, '<p>$1</p>')
-    .replace(/💰/g, '<span style="color:#48d9a4">💰</span>')
-    .replace(/🏙️/g, '<span style="color:#6c63ff">🏙️</span>');
+    .replace(/^(?!<[hublp]|<\/[hublp]|<hr)(.+)$/gm, (m, p1) => p1.trim() ? `<p>${p1}</p>` : '');
   return html;
 }
 
