@@ -102,24 +102,23 @@ def career():
 
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
-    api_key = request.json.get("api_key", "").strip()
+    api_key = os.environ.get("GROQ_API_KEY", "")
     prompt = request.json.get("prompt", "").strip()
 
     if not api_key:
-        return jsonify({"error": "缺少 API Key"}), 400
+        return jsonify({"error": "伺服器未設定 API Key"}), 500
     if not prompt:
         return jsonify({"error": "缺少 prompt"}), 400
 
     def stream():
         resp = requests.post(
-            "https://api.anthropic.com/v1/messages",
+            "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
+                "Authorization": f"Bearer {api_key}",
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-sonnet-4-6",
+                "model": "llama-3.3-70b-versatile",
                 "max_tokens": 2000,
                 "stream": True,
                 "messages": [{"role": "user", "content": prompt}],
@@ -129,7 +128,9 @@ def analyze():
         )
         for line in resp.iter_lines():
             if line:
-                yield line.decode("utf-8") + "\n"
+                decoded = line.decode("utf-8")
+                if decoded.startswith("data: "):
+                    yield decoded + "\n"
 
     return Response(stream(), content_type="text/event-stream")
 
