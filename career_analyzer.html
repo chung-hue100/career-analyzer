@@ -738,11 +738,10 @@ async function analyze() {
 
   switchTab(0);
 
-  await Promise.all([
-    callClaude(PROMPTS.tw_grad(profileData), 'pane0'),
-    callClaude(PROMPTS.tw_job(profileData), 'pane1'),
-    callClaude(PROMPTS.us_grad(profileData), 'pane2'),
-  ]);
+  // Run sequentially to avoid Groq TPM rate limit
+  await callClaude(PROMPTS.tw_grad(profileData), 'pane0');
+  await callClaude(PROMPTS.tw_job(profileData), 'pane1');
+  await callClaude(PROMPTS.us_grad(profileData), 'pane2');
 
   btn.disabled = false;
   btn.textContent = '🔍 重新分析';
