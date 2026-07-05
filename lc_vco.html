@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LC-VCO 模擬結果分析</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --blue:#378ADD; --blue-bg:#E6F1FB; --blue-dk:#0C447C;
+  --green:#1D9E75; --green-bg:#E1F5EE;
+  --coral:#D85A30; --coral-bg:#FAECE7;
+  --amber:#BA7517; --amber-bg:#FAEEDA;
+  --red:#E24B4A; --red-bg:#FCEBEB;
+  --border:#e2e0da; --bg:#f4f3ef; --card:#fff;
+  --text:#1a1a1a; --sec:#5f5e5a; --ter:#999894;
+  --r:12px; --rs:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#171614;--card:#222120;--border:#363330;--text:#ede9e3;--sec:#b0ada6;--ter:#7a7770;
+  --blue-bg:#042C53;--green-bg:#04342C;--coral-bg:#4A1B0C;--amber-bg:#412402;--red-bg:#501313;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--card);border-bottom:0.5px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;gap:10px}
+header h1{font-size:17px;font-weight:500}
+.htag{font-size:11px;padding:2px 9px;border-radius:20px;background:var(--blue-bg);color:var(--blue);font-weight:500}
+main{max-width:880px;margin:0 auto;padding:1.25rem 1rem 4rem}
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1rem}
+.ct{font-size:12px;font-weight:500;color:var(--sec);margin-bottom:10px;letter-spacing:.3px;text-transform:uppercase}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:580px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+.field label{font-size:12px;color:var(--sec);display:block;margin-bottom:4px}
+.field .hint{font-size:11px;color:var(--ter);margin-top:3px}
+.ir{display:flex;align-items:center;gap:6px}
+input[type=number]{flex:1;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:14px;padding:7px 9px;outline:none;width:100%;transition:border-color .15s}
+input[type=number]:focus{border-color:var(--blue)}
+.un{font-size:12px;color:var(--ter);white-space:nowrap}
+.sep{font-size:11px;color:var(--ter);text-align:center;padding:2px 0}
+.btn{width:100%;margin-top:12px;padding:.65rem;border-radius:var(--rs);background:var(--blue);color:#fff;border:none;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.87}
+.metric{background:var(--bg);border-radius:var(--rs);padding:.7rem .9rem}
+.ml{font-size:11px;color:var(--sec);margin-bottom:4px}
+.mv{font-size:21px;font-weight:500}
+.ms{font-size:11px;color:var(--ter);margin-top:2px}
+.cw{position:relative;width:100%;height:220px}
+.jrow{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.jrow:last-child{border-bottom:none}
+.jname{font-size:13px;flex:1}
+.jdesc{font-size:11px;color:var(--ter);margin-top:2px;line-height:1.5}
+.bw{width:72px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;margin-top:6px}
+.bf{height:100%;border-radius:3px}
+.vt{font-size:13px;color:var(--sec);width:80px;text-align:right;flex-shrink:0;padding-top:1px}
+.bdg{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;flex-shrink:0}
+.bg{background:var(--green-bg);color:var(--green)}
+.bw2{background:var(--amber-bg);color:var(--amber)}
+.bb{background:var(--red-bg);color:var(--red)}
+.fix-block{border-left:3px solid var(--border);padding:6px 10px;margin:6px 0;border-radius:0 var(--rs) var(--rs) 0;font-size:13px;line-height:1.7;color:var(--sec)}
+.fix-block.ok{border-color:var(--green);background:var(--green-bg)}
+.fix-block.warn{border-color:var(--amber);background:var(--amber-bg)}
+.fix-block.bad{border-color:var(--red);background:var(--red-bg)}
+.fix-title{font-size:12px;font-weight:500;margin-bottom:3px}
+.fix-block.ok .fix-title{color:var(--green)}
+.fix-block.warn .fix-title{color:var(--amber)}
+.fix-block.bad .fix-title{color:var(--red)}
+#results{display:none}
+
+/* schematic card */
+.scm-preview{max-width:100%;max-height:140px;border-radius:var(--rs);border:0.5px solid var(--border);display:block;margin-top:8px;cursor:zoom-in;transition:max-height .2s}
+.scm-preview.expanded{max-height:500px}
+.param-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.param-table th{font-size:11px;color:var(--sec);font-weight:500;text-align:left;padding:5px 8px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.param-table td{padding:5px 8px;border-bottom:0.5px solid var(--border)}
+.param-table tr:last-child td{border-bottom:none}
+.param-table tr:hover td{background:var(--bg)}
+.topo-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;background:var(--blue-bg);color:var(--blue);margin-bottom:10px}
+.inactive-tag{font-size:10px;padding:1px 5px;border-radius:8px;background:var(--red-bg);color:var(--red)}
+.active-tag{font-size:10px;padding:1px 5px;border-radius:8px;background:var(--green-bg);color:var(--green)}
+.section-sub{font-size:11px;font-weight:600;color:var(--sec);text-transform:uppercase;letter-spacing:.3px;margin:10px 0 4px}
+
+/* AI image upload */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center;color:var(--sec);cursor:pointer;transition:border-color .15s,background .15s;font-size:13px;margin-bottom:8px}
+.drop-zone.over,.drop-zone:hover{border-color:var(--blue);background:var(--blue-bg)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:72px;height:54px;border-radius:6px;overflow:hidden;border:0.5px solid var(--border);flex-shrink:0}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-rm{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;font-size:10px;text-align:center;line-height:16px;cursor:pointer;font-weight:700}
+.vstatus{font-size:12px;color:var(--sec);margin-top:6px;min-height:18px}
+.btn-ai{margin-top:8px;padding:.55rem;border-radius:var(--rs);background:var(--green);color:#fff;border:none;font-size:14px;font-weight:500;cursor:pointer;width:100%;transition:opacity .15s}
+.btn-ai:hover{opacity:.85}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed}
+
+/* topology table */
+.topo-wrap{overflow-x:auto}
+.topo-table{width:100%;border-collapse:collapse;font-size:12px}
+.topo-table th{font-size:11px;color:var(--sec);font-weight:500;text-align:left;padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap}
+.topo-table td{padding:6px 10px;border-bottom:0.5px solid var(--border);vertical-align:top}
+.topo-table tr:last-child td{border-bottom:none}
+.topo-table tr.cur td{background:var(--blue-bg)}
+.cur-badge{font-size:10px;padding:1px 5px;border-radius:10px;background:var(--blue);color:#fff;margin-left:5px;vertical-align:middle}
+.topo-note{font-size:11px;color:var(--ter);margin-top:2px}
+.delta-pos{color:var(--green)}
+.delta-neg{color:var(--red)}
+
+/* transistor tuning */
+.target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:480px){.target-grid{grid-template-columns:1fr 1fr}}
+.tune-item{border-left:3px solid var(--border);padding:6px 10px;border-radius:0 var(--rs) var(--rs) 0;background:var(--bg);margin:4px 0}
+.tune-item.up{border-color:var(--green);background:var(--green-bg)}
+.tune-item.dn{border-color:var(--coral);background:var(--coral-bg)}
+.tune-item.ok{border-color:var(--blue);background:var(--blue-bg)}
+.tune-mos{font-size:13px;font-weight:500;color:var(--text)}
+.tune-dir{font-size:12px;color:var(--sec);margin-top:3px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>LC-VCO 模擬結果分析</h1>
+  </div>
+  <span class="htag">填模擬數據 → 自動評分 + 修正方向</span>
+</header>
+
+<main>
+
+<!-- 架構圖分析 -->
+<div class="card">
+  <div class="ct">電路架構圖分析 <span style="font-size:11px;font-weight:400;color:var(--ter)">上傳 ADS 截圖 → AI 識別拓樸與元件參數</span></div>
+  <input type="file" id="scmFile" accept="image/*" style="display:none" onchange="loadSchematic(this.files[0])">
+  <div class="drop-zone" id="scmDrop"
+    onclick="document.getElementById('scmFile').click()"
+    ondragover="event.preventDefault();this.classList.add('over')"
+    ondragleave="this.classList.remove('over')"
+    ondrop="event.preventDefault();this.classList.remove('over');loadSchematic(event.dataTransfer.files[0])">
+    📐 點擊或拖曳上傳電路架構圖（支援 Ctrl+V 貼上截圖）
+  </div>
+  <div id="scmThumbWrap"></div>
+  <div class="vstatus" id="scmStatus"></div>
+  <button class="btn-ai" id="btnScm" onclick="analyzeSchematic()" disabled>AI 識別架構並讀取元件參數</button>
+  <div id="scmResult" style="display:none;margin-top:12px"></div>
+</div>
+
+<!-- 基本規格 -->
+<div class="card">
+  <div class="ct">基本規格</div>
+  <div class="g2" style="margin-bottom:10px">
+    <div class="field">
+      <label>供應電壓 Vdd</label>
+      <div class="ir"><input type="number" id="vdd" value="1.8" step="0.1" min="0.5"><span class="un">V</span></div>
+    </div>
+    <div class="field">
+      <label>輸出擺幅 Vpp</label>
+      <div class="ir"><input type="number" id="vpp" value="1.45" step="0.05" min="0"><span class="un">V</span></div>
+      <div class="hint">時域波形讀值；或 dBm 換算：2√2×√(10^(dBm/10)×0.05)</div>
+    </div>
+  </div>
+</div>
+
+<!-- 調諧曲線 -->
+<div class="card">
+  <div class="ct">Vc vs fout（調諧曲線）</div>
+  <div class="g3" style="margin-bottom:10px">
+    <div class="field">
+      <label>f_min（Vc = 0V）</label>
+      <div class="ir"><input type="number" id="fmin" value="5.884" step="0.001" min="0.1"><span class="un">GHz</span></div>
+    </div>
+    <div class="field">
+      <label>f_max（Vc = Vdd）</label>
+      <div class="ir"><input type="number" id="fmax" value="6.882" step="0.001" min="0.1"><span class="un">GHz</span></div>
+    </div>
+    <div class="field">
+      <label>中心頻率 f₀（可自動算）</label>
+      <div class="ir"><input type="number" id="f0" value="6.383" step="0.001" min="0.1"><span class="un">GHz</span></div>
+      <div class="hint">留空則自動 = (f_min+f_max)/2</div>
+    </div>
+  </div>
+</div>
+
+<!-- KVCO -->
+<div class="card">
+  <div class="ct">KVCO 曲線數據</div>
+  <div class="g2" style="margin-bottom:10px">
+    <div>
+      <div class="sep" style="margin-bottom:6px">最小 KVCO 點</div>
+      <div class="g2">
+        <div class="field">
+          <label>Vc</label>
+          <div class="ir"><input type="number" id="vc_min" value="0.05" step="0.01"><span class="un">V</span></div>
+        </div>
+        <div class="field">
+          <label>KVCO_min</label>
+          <div class="ir"><input type="number" id="kvco_min" value="142.3" step="1"><span class="un">MHz/V</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sep" style="margin-bottom:6px">最大 KVCO 點</div>
+      <div class="g2">
+        <div class="field">
+          <label>Vc</label>
+          <div class="ir"><input type="number" id="vc_max" value="1.05" step="0.01"><span class="un">V</span></div>
+        </div>
+        <div class="field">
+          <label>KVCO_max</label>
+          <div class="ir"><input type="number" id="kvco_max" value="780.4" step="1"><span class="un">MHz/V</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 相位雜訊 -->
+<div class="card">
+  <div class="ct">相位雜訊</div>
+  <div class="g3">
+    <div class="field">
+      <label>量測偏移頻率</label>
+      <div class="ir"><input type="number" id="pn_offset" value="1" step="0.1" min="0.001"><span class="un">MHz</span></div>
+    </div>
+    <div class="field">
+      <label>相位雜訊</label>
+      <div class="ir"><input type="number" id="pn_val" value="-118.593" step="0.1"><span class="un">dBc/Hz</span></div>
+      <div class="hint">圖上 pnmx 讀值</div>
+    </div>
+    <div class="field">
+      <label>量測時的 Vc</label>
+      <div class="ir"><input type="number" id="pn_vc" value="1.4" step="0.05"><span class="un">V</span></div>
+      <div class="hint">最低雜訊的控制電壓</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI 圖片自動填入 -->
+<div class="card">
+  <div class="ct">AI 自動填入參數 <span style="font-size:11px;font-weight:400;color:var(--ter)">上傳模擬截圖 → AI 自動讀取數值</span></div>
+  <input type="file" id="imgFile" accept="image/*" multiple style="display:none" onchange="addFiles(this.files)">
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('imgFile').click()"
+    ondragover="event.preventDefault();this.classList.add('over')"
+    ondragleave="this.classList.remove('over')"
+    ondrop="event.preventDefault();this.classList.remove('over');addFiles(event.dataTransfer.files)">
+    📂 點擊或拖曳上傳圖片（可同時上傳多張：調諧曲線、KVCO 圖、相位雜訊圖等）
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+  <div class="vstatus" id="vstatus"></div>
+  <button class="btn-ai" id="btnAI" onclick="autoFill()" disabled>AI 分析圖片並自動填入參數</button>
+</div>
+
+<button class="btn" onclick="analyze()">分析並給出修正方向</button>
+
+<!-- 結果 -->
+<div id="results">
+
+<div class="card" style="margin-top:1rem">
+  <div class="ct">核心指標</div>
+  <div class="g4">
+    <div class="metric"><div class="ml">中心頻率</div><div class="mv" id="r-f0" style="color:var(--blue)"></div><div class="ms" id="r-f0s"></div></div>
+    <div class="metric"><div class="ml">FTR</div><div class="mv" id="r-ftr" style="color:var(--green)"></div><div class="ms" id="r-ftrs"></div></div>
+    <div class="metric"><div class="ml">KVCO 比值</div><div class="mv" id="r-ratio" style="color:var(--coral)"></div><div class="ms" id="r-ratios"></div></div>
+    <div class="metric"><div class="ml">相位雜訊</div><div class="mv" id="r-pn"></div><div class="ms" id="r-pns"></div></div>
+  </div>
+</div>
+
+<div class="g2" style="gap:1rem;margin-bottom:1rem">
+  <div class="card" style="margin-bottom:0">
+    <div class="ct">Vc vs fout</div>
+    <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:18px;height:2px;background:#378ADD;display:inline-block"></span>目前模擬</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:18px;height:2px;background:#1D9E75;display:inline-block;border-top:2px dashed #1D9E75"></span>建議（線性化）</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:10px;height:10px;border-radius:50%;background:#D85A30;display:inline-block"></span>SPICE 點</span>
+    </div>
+    <div class="cw"><canvas id="cFreq" role="img" aria-label="調諧曲線">Tuning curve.</canvas></div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="ct">Vc vs KVCO</div>
+    <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:18px;height:2px;background:#D85A30;display:inline-block"></span>目前模擬</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:18px;height:2px;background:#1D9E75;display:inline-block;border-top:2px dashed #1D9E75"></span>建議（三段線性化）</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:10px;height:10px;border-radius:50%;background:#D85A30;display:inline-block"></span>峰值點</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sec)"><span style="width:10px;height:10px;border-radius:50%;background:#378ADD;display:inline-block"></span>谷值點</span>
+    </div>
+    <div class="cw"><canvas id="cKvco" role="img" aria-label="KVCO曲線">KVCO curve.</canvas></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">相位雜訊 vs 偏移頻率 <span style="font-size:11px;font-weight:400;color:var(--ter)">（−20 dB/decade，● SPICE 量測點）</span></div>
+  <div style="position:relative;width:100%;height:260px">
+    <canvas id="cPN" role="img" aria-label="相位雜訊曲線">Phase noise curve.</canvas>
+  </div>
+  <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--sec);flex-wrap:wrap;align-items:center">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:18px;height:2px;background:#378ADD;display:inline-block"></span>目前模擬</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:18px;height:2px;background:#1D9E75;display:inline-block;border-top:2px dashed #1D9E75"></span>建議（線性化後）</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#D85A30;display:inline-block"></span>SPICE 量測</span>
+    <span id="pn-ref-label" style="color:var(--ter)"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">評分</div>
+  <div id="scoreList"></div>
+</div>
+
+<div class="card">
+  <div class="ct">修正方向</div>
+  <div id="fixes"></div>
+</div>
+
+<!-- 架構比較 -->
+<div class="card">
+  <div class="ct">LC-Tank VCO 架構比較 <span style="font-size:11px;font-weight:400;color:var(--ter)">（相同 L/C，不同拓樸的預測效能）</span></div>
+  <div class="topo-wrap"><table class="topo-table" id="topoTable">
+    <thead><tr>
+      <th>架構</th><th>預測 Vpp</th><th>FTR</th><th>KVCO_max</th><th>PN @1MHz</th><th>特性說明</th>
+    </tr></thead>
+    <tbody id="topoBody"></tbody>
+  </table></div>
+</div>
+
+<!-- 電晶體調整指南 -->
+<div class="card">
+  <div class="ct">電晶體調整指南</div>
+  <div style="font-size:12px;color:var(--sec);margin-bottom:8px">設定目標規格，計算需調整哪顆電晶體及方向</div>
+  <div class="target-grid">
+    <div class="field">
+      <label>目標 f_min</label>
+      <div class="ir"><input type="number" id="t_fmin" placeholder="GHz" step="0.01"><span class="un">GHz</span></div>
+    </div>
+    <div class="field">
+      <label>目標 f_max</label>
+      <div class="ir"><input type="number" id="t_fmax" placeholder="GHz" step="0.01"><span class="un">GHz</span></div>
+    </div>
+    <div class="field">
+      <label>目標 Vpp</label>
+      <div class="ir"><input type="number" id="t_vpp" placeholder="V" step="0.05"><span class="un">V</span></div>
+    </div>
+    <div class="field">
+      <label>目標 KVCO_max</label>
+      <div class="ir"><input type="number" id="t_kvco" placeholder="MHz/V" step="10"><span class="un">MHz/V</span></div>
+    </div>
+    <div class="field">
+      <label>目標 PN @1MHz</label>
+      <div class="ir"><input type="number" id="t_pn" placeholder="dBc/Hz" step="1"><span class="un">dBc/Hz</span></div>
+    </div>
+    <div class="field" style="align-self:flex-end">
+      <button class="btn-ai" onclick="tuneGuide()" style="margin-top:0">計算調整方向</button>
+    </div>
+  </div>
+  <div id="tuneResult"></div>
+</div>
+
+</div><!-- /results -->
+</main>
+
+<script>
+let cF, cK, cPN;
+
+// ── 架構圖分析 ───────────────────────────────────────────────────────────────
+
+let schematicImg = null;
+
+// 支援 Ctrl+V 貼上
+document.addEventListener('paste', e => {
+  const items = Array.from(e.clipboardData?.items || []);
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+  if (imgItem) loadSchematic(imgItem.getAsFile());
+});
+
+function loadSchematic(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    schematicImg = { dataUrl: ev.target.result, name: file.name };
+    document.getElementById('scmThumbWrap').innerHTML =
+      `<img class="scm-preview" src="${ev.target.result}" title="點擊放大"
+            onclick="this.classList.toggle('expanded')">`;
+    document.getElementById('btnScm').disabled = false;
+    document.getElementById('scmStatus').textContent = `已選：${file.name}`;
+    document.getElementById('scmStatus').style.color = 'var(--sec)';
+  };
+  reader.readAsDataURL(file);
+}
+
+const SCM_CACHE_KEY = 'vco_schematic_cache';
+
+function loadCachedCircuit() {
+  try {
+    const raw = localStorage.getItem(SCM_CACHE_KEY);
+    if (!raw) return;
+    const { circuit, savedAt, thumbUrl } = JSON.parse(raw);
+    if (thumbUrl) {
+      document.getElementById('scmThumbWrap').innerHTML =
+        `<img class="scm-preview" src="${thumbUrl}" title="點擊放大" onclick="this.classList.toggle('expanded')">`;
+    }
+    renderCircuit(circuit);
+    document.getElementById('scmResult').style.display = 'block';
+    document.getElementById('btnScm').disabled = false;
+    const st = document.getElementById('scmStatus');
+    st.textContent = `✓ 載入上次結果（${savedAt}）　　`;
+    st.style.color = 'var(--green)';
+    // 加清除按鈕
+    const clr = document.createElement('span');
+    clr.textContent = '× 清除快取';
+    clr.style.cssText = 'cursor:pointer;color:var(--ter);font-size:11px;text-decoration:underline';
+    clr.onclick = () => { localStorage.removeItem(SCM_CACHE_KEY); location.reload(); };
+    st.appendChild(clr);
+  } catch(e) {}
+}
+
+async function analyzeSchematic() {
+  if (!schematicImg) return;
+  const btn = document.getElementById('btnScm');
+  btn.disabled = true;
+  btn.textContent = 'AI 分析中…';
+  const st = document.getElementById('scmStatus');
+  st.textContent = '送出架構圖，AI 識別元件中（約 10~20 秒）…';
+  st.style.color = 'var(--sec)';
+
+  try {
+    const resp = await fetch('/api/vco-schematic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: schematicImg.dataUrl })
+    });
+    const json = await resp.json();
+    if (!resp.ok || json.error) {
+      st.textContent = '錯誤：' + (json.error || resp.statusText);
+      st.style.color = 'var(--red)';
+      return;
+    }
+    // 存入 localStorage（縮圖壓縮存）
+    const thumb = await compressThumb(schematicImg.dataUrl);
+    const savedAt = new Date().toLocaleString('zh-TW', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem(SCM_CACHE_KEY, JSON.stringify({ circuit: json.circuit, savedAt, thumbUrl: thumb }));
+
+    renderCircuit(json.circuit);
+    st.textContent = '✓ 架構識別完成，已存入快取（下次開啟自動載入）';
+    st.style.color = 'var(--green)';
+    document.getElementById('scmResult').style.display = 'block';
+  } catch (err) {
+    st.textContent = '網路錯誤：' + err.message;
+    st.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'AI 重新識別（更新架構）';
+  }
+}
+
+function compressThumb(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 300 / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.6));
+    };
+    img.src = dataUrl;
+  });
+}
+
+const FORM_KEY = 'vco_form_cache';
+const FORM_FIELDS = ['vdd','vpp','fmin','fmax','f0','vc_min','kvco_min','vc_max','kvco_max','pn_offset','pn_val','pn_vc'];
+
+function saveForm() {
+  const d = {};
+  FORM_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
+  localStorage.setItem(FORM_KEY, JSON.stringify(d));
+}
+
+function loadForm() {
+  try {
+    const d = JSON.parse(localStorage.getItem(FORM_KEY) || '{}');
+    const vdd = +(d['vdd'] || 1.8);
+    // vc_max 是 KVCO 峰值的 Vc，不應等於 vdd（那是掃描端點被 AI 錯填的值）
+    if (d['vc_max'] && +d['vc_max'] >= vdd) delete d['vc_max'];
+    if (d['vc_min'] && +d['vc_min'] <= 0) delete d['vc_min'];
+    FORM_FIELDS.forEach(id => { if (d[id] !== undefined) { const el = document.getElementById(id); if (el) el.value = d[id]; } });
+  } catch(e) {}
+}
+
+// 每次 input 變動自動存
+FORM_FIELDS.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', saveForm);
+});
+
+loadForm();
+loadCachedCircuit();
+// 頁面載入後自動畫圖（表單有預設值就直接渲染）
+setTimeout(() => { if (document.getElementById('fmin').value) analyze(); }, 100);
+
+function renderCircuit(c) {
+  const topoLabel = {
+    'complementary': '互補式 PMOS+NMOS',
+    'nmos-only':     'NMOS-only 交叉耦合',
+    'pmos-only':     'PMOS-only 交叉耦合',
+    'other':         '其他拓樸',
+  }[c.topology] || c.topology;
+
+  let html = `<span class="topo-pill">🔁 ${topoLabel}</span>`;
+
+  // 偏置條件
+  const bias = [];
+  if (c.vdd      != null) bias.push(`Vdd = ${c.vdd} V`);
+  if (c.vc_default != null) bias.push(`Vc = ${c.vc_default} V`);
+  if (c.vb_default != null) bias.push(`Vb = ${c.vb_default} V`);
+  if (bias.length)
+    html += `<div style="font-size:12px;color:var(--sec);margin-bottom:8px">${bias.join('　|　')}</div>`;
+
+  // 電晶體表格
+  if (c.transistors?.length) {
+    html += `<div class="section-sub">電晶體</div>
+    <div style="overflow-x:auto"><table class="param-table">
+      <thead><tr><th>元件</th><th>類型</th><th>wr (μm)</th><th>lr (μm)</th><th>nr</th><th>W_total</th><th>功能</th></tr></thead>
+      <tbody>`;
+    c.transistors.forEach(t => {
+      const wt = t.w_total || (t.wr * t.nr).toFixed(0);
+      html += `<tr>
+        <td><strong>${t.name}</strong></td>
+        <td><span style="color:${t.type==='PMOS'?'var(--coral)':'var(--blue)'}">${t.type}</span></td>
+        <td>${t.wr}</td><td>${t.lr}</td><td>${t.nr}</td>
+        <td><strong>${wt} μm</strong></td>
+        <td style="color:var(--sec);font-size:11px">${t.role}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // 電感
+  if (c.inductor?.name) {
+    const L = c.inductor;
+    html += `<div class="section-sub">電感</div>
+    <table class="param-table"><thead><tr><th>元件</th><th>w (μm)</th><th>rad (μm)</th><th>圈數 nr</th><th>金屬層 lay</th></tr></thead>
+    <tbody><tr>
+      <td><strong>${L.name}</strong></td>
+      <td>${L.w}</td><td>${L.rad}</td><td>${L.nr}</td><td>${L.lay}</td>
+    </tr></tbody></table>`;
+  }
+
+  // Varactors
+  if (c.varactors?.length) {
+    html += `<div class="section-sub">MOS Varactor</div>
+    <table class="param-table"><thead><tr><th>元件</th><th>g 值</th><th>b 值</th><th>狀態 <span style="font-weight:400;color:var(--ter)">（點擊切換）</span></th></tr></thead><tbody>`;
+    c.varactors.filter(v => /^[A-Z]/i.test(v.name)).forEach((v, i) => {
+      html += `<tr><td><strong>${v.name}</strong></td><td>${v.g}</td><td>${v.b}</td>
+        <td><span class="${v.active!==false?'active-tag':'inactive-tag'}" style="cursor:pointer"
+          onclick="toggleActive('varactors',${i})">${v.active!==false?'啟用':'停用'}</span></td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  // 固定電容 & 電阻（分開存，才能正確對應 index）
+  if ((c.fixed_caps||[]).length || (c.resistors||[]).length) {
+    html += `<div class="section-sub">其他被動元件</div>
+    <table class="param-table"><thead><tr><th>元件</th><th>數值</th>
+      <th>狀態　<span style="font-size:10px;font-weight:400;color:var(--blue);cursor:pointer;text-decoration:underline"
+        onclick="toggleAllPassives()">全部切換</span></th></tr></thead><tbody>`;
+    (c.fixed_caps||[]).forEach((p, i) => {
+      const on = p.active !== false;
+      html += `<tr><td><strong>${p.name}</strong></td><td>${p.value_pF} pF</td>
+        <td><span id="tag_fc_${i}" class="${on?'active-tag':'inactive-tag'}" style="cursor:pointer;user-select:none"
+          onclick="toggleActive('fixed_caps',${i})">${on?'啟用':'停用'}</span></td></tr>`;
+    });
+    (c.resistors||[]).forEach((p, i) => {
+      const on = p.active !== false;
+      html += `<tr><td><strong>${p.name}</strong></td><td>${p.value_kohm} kΩ</td>
+        <td><span id="tag_r_${i}" class="${on?'active-tag':'inactive-tag'}" style="cursor:pointer;user-select:none"
+          onclick="toggleActive('resistors',${i})">${on?'啟用':'停用'}</span></td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  if (c.notes)
+    html += `<div style="margin-top:8px;font-size:11px;color:var(--ter)">📝 ${c.notes}</div>`;
+
+  document.getElementById('scmResult').innerHTML = html;
+}
+
+function toggleActive(group, idx) {
+  const raw = localStorage.getItem(SCM_CACHE_KEY);
+  if (!raw) { alert('找不到快取，請重新分析架構圖'); return; }
+  const cache = JSON.parse(raw);
+  if (!cache.circuit[group] || cache.circuit[group][idx] === undefined) {
+    alert('找不到元件 ' + group + '[' + idx + ']'); return;
+  }
+  const item = cache.circuit[group][idx];
+  item.active = (item.active === false) ? true : false;
+  localStorage.setItem(SCM_CACHE_KEY, JSON.stringify(cache));
+  renderCircuit(cache.circuit);
+  document.getElementById('scmResult').style.display = 'block';
+  // 顯示儲存提示
+  const st = document.getElementById('scmStatus');
+  st.textContent = `✓ ${item.name || group+'['+idx+']'} 已標記為 ${item.active ? '啟用' : '停用'}（已存入快取）`;
+  st.style.color = 'var(--green)';
+}
+
+function toggleAllPassives() {
+  const raw = localStorage.getItem(SCM_CACHE_KEY);
+  if (!raw) return;
+  const cache = JSON.parse(raw);
+  const allOn = [...(cache.circuit.fixed_caps||[]), ...(cache.circuit.resistors||[])].every(p => p.active !== false);
+  ['fixed_caps','resistors'].forEach(g => (cache.circuit[g]||[]).forEach(p => p.active = !allOn));
+  localStorage.setItem(SCM_CACHE_KEY, JSON.stringify(cache));
+  renderCircuit(cache.circuit);
+  document.getElementById('scmResult').style.display = 'block';
+}
+
+// ── Image upload & AI auto-fill ─────────────────────────────────────────────
+
+const uploadedImgs = []; // [{dataUrl, name}]
+
+function addFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadedImgs.push({ dataUrl: e.target.result, name: file.name });
+      renderThumbs();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderThumbs() {
+  const el = document.getElementById('thumbs');
+  el.innerHTML = uploadedImgs.map((img, i) => `
+    <div class="thumb">
+      <img src="${img.dataUrl}" alt="${img.name}" title="${img.name}">
+      <div class="thumb-rm" onclick="removeImg(${i})">×</div>
+    </div>`).join('');
+  document.getElementById('btnAI').disabled = uploadedImgs.length === 0;
+  document.getElementById('vstatus').textContent =
+    uploadedImgs.length > 0 ? `已選 ${uploadedImgs.length} 張圖` : '';
+}
+
+function removeImg(i) {
+  uploadedImgs.splice(i, 1);
+  renderThumbs();
+}
+
+// Paste support (Ctrl+V)
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items || [];
+  let added = 0;
+  Array.from(items).forEach(item => {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) { addFiles([file]); added++; }
+    }
+  });
+  if (added) setStatus(`貼上 ${added} 張圖片`);
+});
+
+function setStatus(msg, isErr) {
+  const el = document.getElementById('vstatus');
+  el.textContent = msg;
+  el.style.color = isErr ? 'var(--red)' : 'var(--sec)';
+}
+
+async function autoFill() {
+  if (uploadedImgs.length === 0) return;
+  const btn = document.getElementById('btnAI');
+  btn.disabled = true;
+  btn.textContent = 'AI 分析中…';
+  setStatus('送出圖片給 AI 分析，請稍候（約 5~15 秒）…');
+
+  try {
+    const payload = { images: uploadedImgs.map(img => ({ data: img.dataUrl })) };
+    const resp = await fetch('/api/vco-vision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await resp.json();
+    if (!resp.ok || json.error) {
+      setStatus('錯誤：' + (json.error || resp.statusText), true);
+      return;
+    }
+    const p = json.params;
+    const filled = [];
+    const fillField = (id, val, label) => {
+      if (val !== null && val !== undefined) {
+        document.getElementById(id).value = val;
+        filled.push(label);
+      }
+    };
+    fillField('vdd',       p.vdd,       'Vdd');
+    fillField('vpp',       p.vpp,       'Vpp');
+    fillField('fmin',      p.fmin,      'f_min');
+    fillField('fmax',      p.fmax,      'f_max');
+    fillField('f0',        p.f0,        'f₀');
+    // vc_min/vc_max 是 KVCO 峰谷對應的 Vc，需要有 KVCO 圖才能判斷
+    // 調諧曲線圖只有掃描範圍的端點，不能當作 KVCO 的 Vc 位置
+    fillField('kvco_min',  p.kvco_min,  'KVCO_min');
+    fillField('kvco_max',  p.kvco_max,  'KVCO_max');
+    fillField('pn_offset', p.pn_offset, 'PN 偏移頻率');
+    fillField('pn_val',    p.pn_val,    'PN 值');
+    fillField('pn_vc',     p.pn_vc,     'PN Vc');
+
+    if (filled.length > 0) {
+      saveForm();
+      analyze();
+      setStatus(`✓ 已自動填入：${filled.join('、')}，並自動分析完成。`);
+    } else {
+      setStatus('AI 未能從圖片讀取到數值，請確認圖片是否清晰並包含數字標示。', true);
+    }
+  } catch(e) {
+    setStatus('網路錯誤：' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'AI 分析圖片並自動填入參數';
+  }
+}
+
+function mosF(vc, fmin, fmax, vcPeak) {
+  const dV = vcPeak * 0.6;
+  const t = (vc - vcPeak) / dV;
+  const ratio = 0.5 * (1 + Math.tanh(t));
+  return fmin + (fmax - fmin) * ratio;
+}
+
+function analyze() {
+  const vdd      = +document.getElementById('vdd').value;
+  const vpp      = +document.getElementById('vpp').value;
+
+  const fmin_GHz = +document.getElementById('fmin').value;
+  const fmax_GHz = +document.getElementById('fmax').value;
+  const f0_input = +document.getElementById('f0').value;
+  const vc_kmin  = +document.getElementById('vc_min').value;
+  const kvco_min = +document.getElementById('kvco_min').value;
+  const vc_kmax  = +document.getElementById('vc_max').value;
+  const kvco_max = +document.getElementById('kvco_max').value;
+  const pn_off   = +document.getElementById('pn_offset').value;
+  const pn_val   = +document.getElementById('pn_val').value;
+  const pn_vc    = +document.getElementById('pn_vc').value;
+
+  const fcenter  = f0_input || (fmin_GHz + fmax_GHz) / 2;
+  const bw_GHz   = fmax_GHz - fmin_GHz;
+  const FTR      = bw_GHz / fcenter * 100;
+  const avgKvco  = bw_GHz / vdd * 1000;
+  const ratio    = kvco_max / kvco_min;
+
+  // normalise PN to 1MHz
+  const pn_1MHz  = pn_val - 20 * Math.log10(pn_off / 1);
+
+  document.getElementById('r-f0').textContent  = fcenter.toFixed(3) + ' GHz';
+  document.getElementById('r-f0s').textContent = `fmin ${fmin_GHz} / fmax ${fmax_GHz}`;
+  document.getElementById('r-ftr').textContent  = FTR.toFixed(2) + '%';
+  document.getElementById('r-ftrs').textContent = `${bw_GHz.toFixed(3)} GHz 絕對頻寬`;
+  document.getElementById('r-ratio').textContent = ratio.toFixed(1) + '×';
+  document.getElementById('r-ratios').textContent= `${kvco_min.toFixed(0)} ~ ${kvco_max.toFixed(0)} MHz/V`;
+  document.getElementById('r-pn').textContent   = pn_1MHz.toFixed(1) + ' dBc/Hz';
+  document.getElementById('r-pns').textContent  = `@ 1MHz（Vc=${pn_vc}V 最佳點）`;
+
+  // 評分項目
+  const scores = [
+    { name:'FTR', val:FTR, unit:'%', good:[10,22], warn:[5,30],
+      ok:'漂亮，純類比變容達到此值說明 Cmax/Cmin 比值設計良好',
+      lo:'偏窄：增大 MOSCAP 尺寸（g 或 b 值），或降低固定寄生電容',
+      hi:'偏寬：縮小 MOSCAP 或改用數位電容陣列（DCO）分段控制' },
+    { name:'Vpp 輸出擺幅', val:vpp, unit:'V', good:[0.9,1.65], warn:[0.6,1.8],
+      ok:'符合規格（>900mV），振盪幅度健康',
+      lo:'不足：增大尾電流源或放寬 gm 元件尺寸',
+      hi:'過高（接近 Vdd）：可能進入 Triode，相位雜訊惡化，縮小尾電流' },
+    { name:'KVCO 平坦度（max/min）', val:ratio, unit:'×', good:[1,4], warn:[1,8],
+      ok:'增益波動在合理範圍',
+      lo:'不可能低於 1×',
+      hi:'非線性過強（' + ratio.toFixed(1) + '×）：PLL 在不同頻率下動態特性差異大，建議線性化' },
+    { name:'相位雜訊（換算 1MHz）', val:-pn_1MHz, unit:'dBc/Hz', good:[100,160], warn:[90,200],
+      ok:'相位雜訊表現優異',
+      lo:'相位雜訊偏差：提升電感 Q 值或降低 KVCO',
+      hi:'不可能' },
+    { name:'平均 KVCO', val:avgKvco, unit:'MHz/V', good:[100,500], warn:[50,800],
+      ok:'KVCO 合理，PLL 控制線雜訊可接受',
+      lo:'偏低：調諧範圍偏窄',
+      hi:'偏高：控制線雜訊直接轉換為相位雜訊，考慮線性化' },
+  ];
+
+  const sl = document.getElementById('scoreList');
+  sl.innerHTML = '';
+  scores.forEach(s => {
+    let cls = 'bg', grade = '漂亮', desc = s.ok;
+    if (s.val < s.good[0] || s.val > s.good[1]) { cls = 'bw2'; grade = '可接受'; }
+    if (s.val < s.warn[0]) { cls = 'bb'; grade = '需改善'; desc = s.lo; }
+    if (s.val > s.warn[1]) { cls = 'bb'; grade = '需改善'; desc = s.hi; }
+    const pct = Math.min(100, Math.max(6, (s.val - s.warn[0]) / (s.warn[1] - s.warn[0]) * 100));
+    const bc  = cls==='bg'?'#1D9E75':cls==='bw2'?'#EF9F27':'#E24B4A';
+    sl.innerHTML += `<div class="jrow">
+      <div style="flex:1"><div class="jname">${s.name}</div><div class="jdesc">${desc}</div></div>
+      <div class="bw"><div class="bf" style="width:${pct.toFixed(0)}%;background:${bc}"></div></div>
+      <div class="vt">${s.val.toFixed(s.unit==='%'?2:s.unit==='V'?2:0)} ${s.unit}</div>
+      <span class="bdg ${cls}">${grade}</span>
+    </div>`;
+  });
+
+  // 修正建議
+  const fixes = [];
+
+  // Vpp check
+  if (vpp >= 0.9 && vpp <= 1.5) {
+    fixes.push({ cls:'ok', title:'輸出擺幅 OK', body:`Vpp = ${vpp}V，符合 >900mV 規格。不需調整尾電流。` });
+  } else if (vpp < 0.9) {
+    fixes.push({ cls:'bad', title:'輸出擺幅不足 → 增大尾電流', body:`目前 Vpp = ${vpp}V，低於 900mV。<br>→ 增大 M125/M126 的 W/L 比（目前 wr=6μm nr=48），或提高偏置電壓。` });
+  } else {
+    fixes.push({ cls:'warn', title:'擺幅過大 → 可能進 Triode', body:`Vpp = ${vpp}V 接近 Vdd(${vdd}V)。交叉耦合對可能進入線性區，導致波形失真與相位雜訊惡化。<br>→ 縮小尾電流（M125/M126 W 值減小 10~20%）。` });
+  }
+
+  // KVCO 非線性
+  if (ratio > 4) {
+    fixes.push({ cls:'bad', title:`KVCO 非線性 ${ratio.toFixed(1)}× → 需線性化`, body:
+      `最小 KVCO = ${kvco_min.toFixed(0)} MHz/V（Vc=${vc_kmin}V），最大 = ${kvco_max.toFixed(0)} MHz/V（Vc=${vc_kmax}V）。<br>
+      <strong>方法 A — 三段差動偏壓線性化：</strong>將 C15/C16 拆為 3 組並聯，分別施加 0V / 0.6V / 1.2V 偏移，三段 C-V 曲線錯開互補，可將峰值壓至 ~300 MHz/V。<br>
+      <strong>方法 B — 數位開關電容陣列（DCO）：</strong>保留小尺寸類比調諧，其餘頻段用 binary-weighted 電容銀行切換，KVCO 可壓至 50 MHz/V 以下。` });
+  } else {
+    fixes.push({ cls:'ok', title:'KVCO 線性度尚可', body:`峰值/谷值比 ${ratio.toFixed(1)}×，PLL 設計時仍需注意 Vc≈${vc_kmax}V 附近的高增益區。` });
+  }
+
+  // PLL 鎖定點建議
+  const best_vc_range = [Math.max(0, vc_kmax - 0.3).toFixed(2), Math.min(vdd, vc_kmax + 0.3).toFixed(2)];
+  fixes.push({ cls:'warn', title:`PLL 鎖定點應避開 Vc ≈ ${vc_kmax}V`, body:
+    `KVCO 在 Vc=${vc_kmax}V 達到峰值 ${kvco_max.toFixed(0)} MHz/V。此區任何控制線漣波都被放大 → 時域 jitter 最大。<br>
+    → 建議 PLL 鎖定點設計在 Vc = ${best_vc_range[0]}V 以外（低端 ${vc_kmin.toFixed(2)}~${(vc_kmax-0.3).toFixed(2)}V 或高端 ${(vc_kmax+0.3).toFixed(2)}~${vdd}V），KVCO 較平坦，jitter 較小。` });
+
+  // 相位雜訊
+  if (pn_1MHz >= -120) {
+    fixes.push({ cls:'ok', title:`相位雜訊 ${pn_1MHz.toFixed(1)} dBc/Hz @ 1MHz 優異`, body:
+      `互補式（PMOS+NMOS）架構使等效 gm 加倍，比純 NMOS 型改善 ~3 dB。目前表現良好，不需調整電感。` });
+  } else {
+    fixes.push({ cls:'warn', title:'相位雜訊可進一步改善', body:
+      `目前 ${pn_1MHz.toFixed(1)} dBc/Hz @ 1MHz。<br>→ 提升電感 Q（改善佈局或換更大 rad）<br>→ 降低 KVCO（線性化）可直接改善 −20 log(KVCO) 項。` });
+  }
+
+  // FTR
+  if (FTR >= 10 && FTR <= 22) {
+    fixes.push({ cls:'ok', title:`FTR ${FTR.toFixed(1)}% 漂亮，不需調整 MOSCAP 尺寸`, body:
+      `純類比變容在 6GHz 高頻段達到 ${FTR.toFixed(1)}% 非常優秀。若要進一步拉寬，需搭配數位電容陣列。` });
+  }
+
+  const fd = document.getElementById('fixes');
+  fd.innerHTML = fixes.map(f =>
+    `<div class="fix-block ${f.cls}"><div class="fix-title">${f.title}</div>${f.body}</div>`
+  ).join('');
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // 繪圖
+  if (cF) cF.destroy();
+  if (cK) cK.destroy();
+  if (cPN) cPN.destroy();
+
+  const N = 40;
+  const vcArr=[], fArr=[], fSugArr=[], kvArr=[], kvSugArr=[], kvVc=[];
+  for (let i=0;i<=N;i++) {
+    const vc = +(i/N*vdd).toFixed(3);
+    // 目前：S 型 MOS 特性曲線
+    const f  = +mosF(vc, fmin_GHz, fmax_GHz, vc_kmax * 0.9).toFixed(4);
+    // 建議：線性化後（更接近直線，代表 DCO 分段或多段偏壓效果）
+    const fS = +(fmin_GHz + (fmax_GHz - fmin_GHz) * (vc / vdd)).toFixed(4);
+    vcArr.push(vc); fArr.push(f); fSugArr.push(fS);
+  }
+
+  // 目前 KVCO：單峰 Gaussian
+  const sigma = vc_kmax * 0.45;
+  // 建議 KVCO：三段偏壓線性化，三個小峰疊加
+  const kvco_sug_peak = +(kvco_min + (kvco_max - kvco_min) * 0.38).toFixed(1);
+  const sigS = vdd * 0.18;
+  const centers = [vdd*0.2, vdd*0.55, vdd*0.85];
+
+  for (let i=0;i<N;i++) {
+    const vc = +((vcArr[i]+vcArr[i+1])/2).toFixed(3);
+    const t  = (vc - vc_kmax) / sigma;
+    const kv = +(kvco_min + (kvco_max - kvco_min) * Math.exp(-t*t*0.9)).toFixed(1);
+
+    // 三段線性化：三個 Gaussian 疊加
+    let kvS = kvco_min;
+    centers.forEach(c => {
+      const ts = (vc - c) / sigS;
+      kvS += (kvco_sug_peak - kvco_min) / centers.length * Math.exp(-ts*ts);
+    });
+    kvS = +kvS.toFixed(1);
+
+    kvArr.push(kv); kvSugArr.push(kvS); kvVc.push(vc);
+  }
+
+  const stepX = +(vdd/6).toFixed(1);
+
+  cF = new Chart(document.getElementById('cFreq'),{
+    type:'line',
+    data:{ labels:vcArr, datasets:[
+      { label:'目前模擬', data:fArr, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.07)', fill:true, tension:0.4, pointRadius:0, borderWidth:2 },
+      { label:'建議（線性化）', data:fSugArr, borderColor:'#1D9E75', backgroundColor:'transparent', fill:false, tension:0, pointRadius:0, borderWidth:2, borderDash:[6,4] },
+      { label:'SPICE 點', data:[{x:0,y:fmin_GHz},{x:vdd,y:fmax_GHz}], type:'scatter', backgroundColor:'#D85A30', pointRadius:7, showLine:false }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ type:'linear', min:0, max:vdd, title:{ display:true, text:'Vc (V)', font:{size:11} }, ticks:{ font:{size:10}, stepSize:stepX } },
+        y:{ title:{ display:true, text:'fout (GHz)', font:{size:11} }, ticks:{ font:{size:10} } }
+      }
+    }
+  });
+
+  // 相位雜訊圖
+  const pnFreqs = [];
+  const pnVals  = [];
+  const decades = [100, 200, 500, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8];
+  const pn_ref_Hz = pn_off * 1e6;
+  decades.forEach(f => {
+    pnFreqs.push(f);
+    pnVals.push(+(pn_val + 20 * Math.log10(pn_ref_Hz / f)).toFixed(2));
+  });
+
+  // 建議相位雜訊：先算好再用
+  const kvco_avg_sug = kvco_min + (kvco_sug_peak - kvco_min) * 0.6;
+  const pn_improve_dB = 20 * Math.log10(avgKvco / kvco_avg_sug);
+  const pnSugVals = pnVals.map(v => +(v - pn_improve_dB).toFixed(2));
+  const pn_sug_at_1M = (pn_val - pn_improve_dB).toFixed(1);
+
+  const labelMap = { 100:'100Hz', 1e3:'1k', 1e4:'10k', 1e5:'100k', 1e6:'1M', 1e7:'10M', 1e8:'100M' };
+  document.getElementById('pn-ref-label').textContent =
+    `量測基準：${pn_val} dBc/Hz @ ${pn_off >= 1 ? pn_off+'MHz' : (pn_off*1000).toFixed(0)+'kHz'}（Vc=${pn_vc}V）` +
+    `　線性化後預估改善 ${pn_improve_dB.toFixed(1)} dB → ${pn_sug_at_1M} dBc/Hz @ 1MHz`;
+
+  cPN = new Chart(document.getElementById('cPN'), {
+    type: 'line',
+    data: {
+      labels: pnFreqs,
+      datasets: [
+        { label:'目前模擬', data: pnVals,
+          borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.07)',
+          fill:true, tension:0, pointRadius:0, borderWidth:2 },
+        { label:'建議（線性化後）', data: pnSugVals,
+          borderColor:'#1D9E75', backgroundColor:'transparent',
+          fill:false, tension:0, pointRadius:0, borderWidth:2, borderDash:[6,4] },
+        { label:'SPICE 量測', data:[{ x: pn_ref_Hz, y: pn_val }],
+          type:'scatter', backgroundColor:'#D85A30', pointRadius:8, showLine:false },
+        { label:'目標規格', data: pnFreqs.map(f => +(-120 + 20*Math.log10(1e6/f)).toFixed(2)),
+          borderColor:'#F5A623', backgroundColor:'transparent',
+          fill:false, tension:0, pointRadius:0, borderWidth:1.5, borderDash:[3,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: {
+          title: ctx => {
+            const f = ctx[0].parsed.x;
+            if (f >= 1e6) return (f/1e6).toFixed(1)+' MHz';
+            if (f >= 1e3) return (f/1e3).toFixed(0)+' kHz';
+            return f+' Hz';
+          },
+          label: ctx => ctx.parsed.y.toFixed(1)+' dBc/Hz'
+        }}
+      },
+      scales: {
+        x: { type:'logarithmic', min:100, max:1e8,
+          title:{ display:true, text:'Offset frequency (Hz)', font:{size:11} },
+          ticks:{ font:{size:10}, callback: v => labelMap[v] || '' }
+        },
+        y: { reverse: false,
+          title:{ display:true, text:'Phase noise (dBc/Hz)', font:{size:11} },
+          ticks:{ font:{size:10} }
+        }
+      }
+    },
+    plugins:[{ afterDraw: chart => {
+      const ctx2 = chart.ctx;
+      const xScale = chart.scales.x, yScale = chart.scales.y;
+      const xPx = xScale.getPixelForValue(1e6);
+      const yPx = yScale.getPixelForValue(+pn_sug_at_1M);
+      ctx2.save();
+      ctx2.fillStyle = '#F5A623';
+      ctx2.font = 'bold 11px sans-serif';
+      ctx2.textAlign = 'left';
+      ctx2.fillText(`典型目標 −120 dBc/Hz @ 1MHz`, xPx + 6, yPx - 5);
+      ctx2.restore();
+    }}]
+  });
+
+  cK = new Chart(document.getElementById('cKvco'),{
+    type:'line',
+    data:{ labels:kvVc, datasets:[
+      { label:'目前模擬', data:kvArr, borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.07)', fill:true, tension:0.4, pointRadius:0, borderWidth:2 },
+      { label:'建議（三段線性化）', data:kvSugArr, borderColor:'#1D9E75', backgroundColor:'transparent', fill:false, tension:0.4, pointRadius:0, borderWidth:2, borderDash:[6,4] },
+      { label:'峰值', data:[{x:vc_kmax,y:kvco_max}], type:'scatter', backgroundColor:'#D85A30', pointRadius:7, showLine:false },
+      { label:'谷值', data:[{x:vc_kmin,y:kvco_min}], type:'scatter', backgroundColor:'#378ADD', pointRadius:7, showLine:false },
+      { label:'目標（平均值）', data: kvVc.map(() => +avgKvco.toFixed(1)),
+        borderColor:'#F5A623', backgroundColor:'transparent',
+        fill:false, tension:0, pointRadius:0, borderWidth:1.5, borderDash:[3,3] }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ type:'linear', min:0, max:vdd, title:{ display:true, text:'Vc (V)', font:{size:11} }, ticks:{ font:{size:10}, stepSize:stepX } },
+        y:{ min:0, title:{ display:true, text:'KVCO (MHz/V)', font:{size:11} }, ticks:{ font:{size:10} } }
+      }
+    },
+    plugins:[{ afterDraw: chart => {
+      const ctx2 = chart.ctx;
+      const xScale = chart.scales.x, yScale = chart.scales.y;
+      const xPx = xScale.getPixelForValue(vdd * 0.05);
+      const yPx = yScale.getPixelForValue(avgKvco);
+      ctx2.save();
+      ctx2.fillStyle = '#F5A623';
+      ctx2.font = 'bold 11px sans-serif';
+      ctx2.textAlign = 'left';
+      ctx2.fillText(`目標 ≤ ${avgKvco.toFixed(0)} MHz/V`, xPx, yPx - 6);
+      ctx2.restore();
+    }}]
+  });
+
+  renderTopology();
+}
+
+// ── 架構比較 ──────────────────────────────────────────────────────
+function renderTopology() {
+  const vpp    = +document.getElementById('vpp').value;
+  const fmin   = +document.getElementById('fmin').value;
+  const fmax   = +document.getElementById('fmax').value;
+  const kvco_mx= +document.getElementById('kvco_max').value;
+  const pn_val = +document.getElementById('pn_val').value;
+  const pn_off = +document.getElementById('pn_offset').value;
+  const pn_1M  = pn_val - 20*Math.log10(pn_off/1);
+  const fcenter= (fmin+fmax)/2;
+  const FTR    = (fmax-fmin)/fcenter*100;
+
+  const topos = [
+    { name:'互補式 PMOS+NMOS', sub:'M127/M121 + M123/M124（目前設計）',
+      vppF:1.00, pnD:0, cur:true,
+      pro:'gm_eff = gm_n + gm_p，PN 最佳，起振裕度最大（6.4×）',
+      con:'需 PMOS twin-well，面積較大' },
+    { name:'NMOS-only 交叉耦合', sub:'移除 M127/M121，僅保留 NMOS pair',
+      vppF:0.78, pnD:+3.0, cur:false,
+      pro:'電路最簡單，面積最小，Vdd 雜訊耦合低',
+      con:'gm 降低約 52%，Vpp 下降，PN 惡化 ~3 dB' },
+    { name:'PMOS-only 交叉耦合', sub:'移除 M123/M124，僅保留 PMOS pair',
+      vppF:0.72, pnD:+3.5, cur:false,
+      pro:'PMOS 1/f 雜訊小，低偏移頻率 PN 較好',
+      con:'μp ≈ μn/4，gm 最小，Vpp 最低，PN 惡化 ~3.5 dB' },
+    { name:'互補式（無尾電流源）', sub:'移除 M125/M126，電流直接由 Vdd 供應',
+      vppF:1.32, pnD:+1.5, cur:false,
+      pro:'Vpp 最大，省去尾電流設計複雜度',
+      con:'Vpp 不可控，Vdd 雜訊直接耦合入 tank，PSRR 差' },
+  ];
+
+  const tbody = document.getElementById('topoBody');
+  tbody.innerHTML = topos.map(t => {
+    const v  = (vpp * t.vppF).toFixed(2);
+    const p  = (pn_1M + t.pnD).toFixed(1);
+    const dv = t.vppF !== 1 ? ` <small style="color:${t.vppF>1?'var(--green)':'var(--red)'}">(×${t.vppF})</small>` : '';
+    const dp = t.pnD  !== 0 ? ` <small style="color:var(--red)">(${t.pnD>0?'+':''}${t.pnD} dB)</small>` : '';
+    return `<tr class="${t.cur?'cur':''}">
+      <td><strong>${t.name}</strong>${t.cur?'<span class="cur-badge">目前</span>':''}
+          <div class="topo-note">${t.sub}</div></td>
+      <td>${v}V${dv}</td>
+      <td>${FTR.toFixed(1)}%</td>
+      <td>${kvco_mx.toFixed(0)} MHz/V</td>
+      <td>${p} dBc/Hz${dp}</td>
+      <td><span style="color:var(--green);font-size:11px">✓ ${t.pro}</span><br>
+          <span style="color:var(--red);font-size:11px">✗ ${t.con}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── 電晶體調整指南 ───────────────────────────────────────────────
+function tuneGuide() {
+  const cur_fmin = +document.getElementById('fmin').value;
+  const cur_fmax = +document.getElementById('fmax').value;
+  const cur_vpp  = +document.getElementById('vpp').value;
+  const cur_kvco = +document.getElementById('kvco_max').value;
+  const cur_pnv  = +document.getElementById('pn_val').value;
+  const cur_pnof = +document.getElementById('pn_offset').value;
+  const cur_pn1M = cur_pnv - 20*Math.log10(cur_pnof/1);
+  const cur_fc   = (cur_fmin+cur_fmax)/2;
+  const cur_ftr  = (cur_fmax-cur_fmin)/cur_fc*100;
+
+  const t_fmin = document.getElementById('t_fmin').value !== '' ? +document.getElementById('t_fmin').value : null;
+  const t_fmax = document.getElementById('t_fmax').value !== '' ? +document.getElementById('t_fmax').value : null;
+  const t_vpp  = document.getElementById('t_vpp').value  !== '' ? +document.getElementById('t_vpp').value  : null;
+  const t_kvco = document.getElementById('t_kvco').value !== '' ? +document.getElementById('t_kvco').value : null;
+  const t_pn   = document.getElementById('t_pn').value   !== '' ? +document.getElementById('t_pn').value   : null;
+
+  const items = [];
+
+  // ① 中心頻率偏移 → 調 MOSCAP b 值
+  if (t_fmin !== null && t_fmax !== null) {
+    const t_fc  = (t_fmin + t_fmax) / 2;
+    const t_ftr = (t_fmax - t_fmin) / t_fc * 100;
+    const df    = t_fc - cur_fc; // GHz，正 = 需要拉高
+    const dFTR  = t_ftr - cur_ftr;
+
+    if (Math.abs(df) > 0.05) {
+      // ΔC ≈ -2 × C_total × Δf/f₀，C_total ≈ 641fF，每 1 個 b 單位 ≈ Cox×g×1μm = 34.4fF
+      const dc_fF = -2 * 641 * df / cur_fc;
+      const db    = Math.round(dc_fF / 34.4);
+      const newB  = Math.max(5, 15 + db);
+      const dir   = df > 0 ? 'up' : 'dn';
+      items.push({ cls: dir,
+        mos: 'C15 / C16　MOSCAP b 值（目前 b = 15）',
+        dir: `目標中心頻率 ${df>0?'↑':'↓'} ${Math.abs(df*1000).toFixed(0)} MHz<br>
+              → b 值由 15 調整為 <strong>${newB}</strong>（${df>0?'減少':'增加'} ${Math.abs(db)} 個單位）<br>
+              <span style="color:var(--ter)">原理：b↑ → 總電容↑ → 振盪頻率↓；每 ±1 個 b 約移動頻率 ${(cur_fc/2*34.4/641*1000).toFixed(0)} MHz</span>` });
+    }
+
+    if (Math.abs(dFTR) > 0.8) {
+      const dir = dFTR > 0 ? 'up' : 'dn';
+      items.push({ cls: dir,
+        mos: 'C15 / C16　MOSCAP g 值（目前 g = 4）',
+        dir: `目標 FTR ${dFTR>0?'↑':'↓'} ${Math.abs(dFTR).toFixed(1)}%<br>
+              → g 值由 4 調整為 <strong>${Math.max(1, Math.round(4 * (1 + dFTR/cur_ftr)))}</strong><br>
+              <span style="color:var(--ter)">原理：g↑ → 並聯指數增加 → ΔC↑ → FTR 擴大；每 ±1 個 g 約改變 FTR ${(cur_ftr/4).toFixed(1)}%</span>` });
+    }
+  }
+
+  // ② Vpp 調整 → 調尾電流 M125/M126
+  if (t_vpp !== null && Math.abs(t_vpp - cur_vpp) > 0.05) {
+    const dv  = t_vpp - cur_vpp;
+    const dnr = Math.round(48 * dv / cur_vpp);
+    const newNr = Math.max(8, 48 + dnr);
+    const newWr = +(6 * (1 + dv / cur_vpp)).toFixed(1);
+    items.push({ cls: dv > 0 ? 'up' : 'dn',
+      mos: 'M125 / M126　NMOS 尾電流源（目前 wr=6μm，nr=48）',
+      dir: `目標 Vpp ${dv>0?'↑':'↓'} ${Math.abs(dv*1000).toFixed(0)} mV<br>
+            方法 A：nr 調整為 <strong>${newNr}</strong>（${dv>0?'增加':'減少'} ${Math.abs(dnr)} 根並聯指）<br>
+            方法 B：wr 調整為 <strong>${Math.max(2,newWr).toFixed(1)} μm</strong><br>
+            <span style="color:var(--ter)">原理：Vpp ≈ 2×I_tail×Rp，I_tail ∝ W/L；M122 同步調整以維持電流鏡比例</span>` });
+  }
+
+  // ③ KVCO 線性化 → 三段偏壓或移除串聯電容
+  if (t_kvco !== null) {
+    const dk = t_kvco - cur_kvco;
+    if (dk < -100) {
+      items.push({ cls: 'dn',
+        mos: 'C15 / C16　三段差動偏壓線性化',
+        dir: `目標 KVCO_max 降至 ${t_kvco.toFixed(0)} MHz/V（目前 ${cur_kvco.toFixed(0)} MHz/V，需降低 ${Math.abs(dk).toFixed(0)} MHz/V）<br>
+              → 將 C15/C16 各拆為 3 組並聯，SRC24 偏壓分三路：<br>
+              &nbsp;&nbsp;Vb−0.6V / Vb / Vb+0.6V（目前 Vb=0.9V → 0.3V / 0.9V / 1.5V）<br>
+              → 三段 C-V 曲線錯開互補，KVCO 峰值可壓至 ~<strong>${(cur_kvco*0.35).toFixed(0)} MHz/V</strong><br>
+              <span style="color:var(--ter)">同時 PN 因 KVCO↓ 可改善 ${(20*Math.log10(cur_kvco/t_kvco)).toFixed(1)} dB</span>` });
+    }
+  }
+
+  // ④ 相位雜訊改善
+  if (t_pn !== null && t_pn < cur_pn1M - 2) {
+    const dpn = t_pn - cur_pn1M;
+    items.push({ cls: 'up',
+      mos: '改善 PN 的優先順序',
+      dir: `目標 PN 改善 ${Math.abs(dpn).toFixed(1)} dB<br>
+            <strong>步驟 1</strong>：KVCO 線性化（KVCO 減半 → PN 改善 6 dB，效果最顯著）<br>
+            <strong>步驟 2</strong>：增大電感 Q 值
+              → L6 加寬 w（目前 30μm → 40μm）或增大 rad（130μm → 160μm）<br>
+            <strong>步驟 3</strong>：增大 M127/M121 gm
+              → wr 從 2μm 提高至 3μm（提升 gm_p，降低雜訊因子 F）<br>
+            <span style="color:var(--ter)">每步驟估計效益：KVCO×0.5 → +6dB；Q×1.3 → +2.3dB；gm×1.3 → +0.5dB</span>` });
+  }
+
+  const el = document.getElementById('tuneResult');
+  if (items.length === 0) {
+    el.innerHTML = '<div style="padding:12px;color:var(--green);font-size:13px">✓ 目前規格已符合所有目標，無需調整。</div>';
+    return;
+  }
+  el.innerHTML = items.map(it => `
+    <div class="tune-item ${it.cls}">
+      <div class="tune-mos">${it.mos}</div>
+      <div class="tune-dir">${it.dir}</div>
+    </div>`).join('');
+}
+
+analyze();
+</script>
+</body>
+</html>
